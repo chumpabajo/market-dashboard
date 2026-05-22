@@ -1312,32 +1312,46 @@ function connectBinance() {
 
 // ── 2. Metals — Oro y Plata cada 30s ──
 async function fetchMetals() {
-  // Primary: Coinbase rates API (free, CORS-open, reliable)
-  // XAU and XAG are available as exchange rates vs USD
-  try {
-    const [rGold, rSilver] = await Promise.all([
-      fetch('https://api.coinbase.com/v2/exchange-rates?currency=XAU'),
-      fetch('https://api.coinbase.com/v2/exchange-rates?currency=XAG')
-    ]);
-    if(rGold.ok && rSilver.ok) {
-      const dGold   = await rGold.json();
-      const dSilver = await rSilver.json();
-      const xau = parseFloat(dGold?.data?.rates?.USD);
-      const xag = parseFloat(dSilver?.data?.rates?.USD);
-      if(xau && xau > 100) { applyPrice('xau', xau, null); }
-      if(xag && xag > 1)   { applyPrice('xag', xag, null); }
-      return;
-    }
-  } catch(e) { console.warn('Coinbase metals failed:', e.message); }
+  // metals.live — free, no key, works via allorigins proxy from GitHub Pages
+  const PROXY = 'https://api.allorigins.win/get?url=';
 
-  // Fallback: Frankfurter.app (free ECB data, CORS-open) — less frequent updates
+  // Strategy 1: direct (works if server has CORS headers)
   try {
-    const r = await fetch('https://api.frankfurter.app/latest?from=XAU&to=USD,EUR');
+    const r = await fetch('https://api.metals.live/v1/spot/gold,silver');
     if(r.ok) {
       const d = await r.json();
-      if(d?.rates?.USD) applyPrice('xau', d.rates.USD, null);
+      // Response is array: [{gold: price}, {silver: price}] or [{price, metal}]
+      let xau = null, xag = null;
+      for(const item of d) {
+        if(item.gold  !== undefined) xau = parseFloat(item.gold);
+        if(item.silver!== undefined) xag = parseFloat(item.silver);
+        if(item.metal === 'gold')   xau = parseFloat(item.price);
+        if(item.metal === 'silver') xag = parseFloat(item.price);
+      }
+      if(xau && xau > 100) { applyPrice('xau', xau, null); }
+      if(xag && xag > 1)   { applyPrice('xag', xag, null); }
+      if(xau || xag) return;
     }
   } catch(e) {}
+
+  // Strategy 2: via allorigins proxy (always works from GitHub Pages)
+  try {
+    const url = encodeURIComponent('https://api.metals.live/v1/spot/gold,silver');
+    const r = await fetch(PROXY + url);
+    if(r.ok) {
+      const wrapper = await r.json();
+      const d = JSON.parse(wrapper.contents);
+      let xau = null, xag = null;
+      for(const item of d) {
+        if(item.gold   !== undefined) xau = parseFloat(item.gold);
+        if(item.silver !== undefined) xag = parseFloat(item.silver);
+        if(item.metal === 'gold')    xau = parseFloat(item.price);
+        if(item.metal === 'silver')  xag = parseFloat(item.price);
+      }
+      if(xau && xau > 100) applyPrice('xau', xau, null);
+      if(xag && xag > 1)   applyPrice('xag', xag, null);
+    }
+  } catch(e) { console.warn('fetchMetals fallback failed:', e.message); }
 }
 
 // ── 3. USD/CLP cada 30s ──
@@ -1351,63 +1365,40 @@ async function fetchCLP() {
   } catch(e) {}
 }
 
-// ── 4. Indices via reliable CORS-open APIs ──
+// ── 4. Indices via Yahoo Finance + allorigins proxy (works from GitHub Pages) ──
 async function fetchIndices() {
-  // Use stooq.com — free, no CORS, no key required
-  // Returns CSV: Date,Open,High,Low,Close,Volume
-  const stooqMap = [
-    { sym: 'hyg.us',  key: 'hyg',   format: (p) => '$'+p.toFixed(2),                           stressIdx: 0 },
-    { sym: 'spy.us',  key: 'spx',   format: (p) => p.toLocaleString('es-CL',{maximumFractionDigits:0}), stressIdx: 3 },
-    { sym: 'qqq.us',  key: 'ndx',   format: (p) => p.toLocaleString('es-CL',{maximumFractionDigits:0}), stressIdx: 4 },
+  const PROXY = 'https://api.allorigins.win/get?url=';
+
+  // Yahoo Finance query — symbols: HYG, ^VIX, ^GSPC (SPX), ^IXIC (NASDAQ), ^TNX (10Y yield)
+  const yahooMap = [
+    { sym: '^TNX',  key: 'us10y', stressIdx: 2, fmt: (p) => (p).toFixed(2)+'%' },
+    { sym: 'HYG',   key: 'hyg',   stressIdx: 0, fmt: (p) => '$'+p.toFixed(2) },
+    { sym: '^VIX',  key: 'vix',   stressIdx: null, fmt: null },
+    { sym: '^GSPC', key: 'spx',   stressIdx: 3, fmt: (p) => p.toLocaleString('es-CL',{maximumFractionDigits:0}) },
+    { sym: '^IXIC', key: 'ndx',   stressIdx: 4, fmt: (p) => p.toLocaleString('es-CL',{maximumFractionDigits:0}) },
   ];
 
-  for(const item of stooqMap) {
+  const stressVals = document.querySelectorAll('.stress-value');
+
+  for(const item of yahooMap) {
     try {
-      const r = await fetch(`https://stooq.com/q/l/?s=${item.sym}&f=sd2t2ohlcv&h&e=csv`);
+      const yUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(item.sym)}?interval=1d&range=1d`;
+      const r = await fetch(PROXY + encodeURIComponent(yUrl));
       if(!r.ok) continue;
-      const text = await r.text();
-      const lines = text.trim().split('\n');
-      if(lines.length < 2) continue;
-      const cols = lines[1].split(',');
-      const price = parseFloat(cols[4]); // Close price
-      if(isNaN(price) || price <= 0) continue;
+      const wrapper = await r.json();
+      const data = JSON.parse(wrapper.contents);
+      const meta = data?.chart?.result?.[0]?.meta;
+      if(!meta) continue;
+      const price = meta.regularMarketPrice;
+      if(!price || isNaN(price)) continue;
+
       priceState[item.key] = price;
-      const stressVals = document.querySelectorAll('.stress-value');
-      if(stressVals[item.stressIdx]) {
-        stressVals[item.stressIdx].textContent = item.format(price);
+
+      if(item.stressIdx !== null && stressVals[item.stressIdx]) {
+        stressVals[item.stressIdx].textContent = item.fmt(price);
       }
     } catch(e) { continue; }
   }
-
-  // US 10Y yield via FRED JSON API (free, CORS-open)
-  try {
-    const r = await fetch('https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&sort_order=desc&limit=1&file_type=json&api_key=f6ed3b8adb0b5e32a32c58faa51c3a47');
-    if(r.ok) {
-      const d = await r.json();
-      const val = parseFloat(d?.observations?.[0]?.value);
-      if(!isNaN(val)) {
-        priceState['us10y'] = val * 10; // store as *10 for consistency
-        const stressVals = document.querySelectorAll('.stress-value');
-        if(stressVals[2]) stressVals[2].textContent = val.toFixed(2)+'%';
-      }
-    }
-  } catch(e) {}
-
-  // VIX via stooq
-  try {
-    const r = await fetch('https://stooq.com/q/l/?s=^vix&f=sd2t2ohlcv&h&e=csv');
-    if(r.ok) {
-      const text = await r.text();
-      const lines = text.trim().split('\n');
-      if(lines.length >= 2) {
-        const price = parseFloat(lines[1].split(',')[4]);
-        if(!isNaN(price)) {
-          priceState['vix'] = price;
-          // VIX not shown in stress grid but used by Claude
-        }
-      }
-    }
-  } catch(e) {}
 }
 
 // ── Manual refresh button ──
@@ -1634,38 +1625,71 @@ Responde SOLO con JSON válido (sin markdown, sin texto extra):
     if(!response.ok) throw new Error('API ' + response.status);
     const data = await response.json();
 
-    // Extract text from response (may include tool use blocks)
+    // Handle agentic responses: when web_search tool is used, the API returns
+    // stop_reason='tool_use'. We need to continue the conversation until
+    // stop_reason='end_turn' to get the final JSON text response.
+    let finalContent = data.content;
+    let fullMessages = [{ role: 'user', content: prompt }];
+
+    // Agentic loop — follow tool calls until end_turn (max 5 rounds)
+    let rounds = 0;
+    let currentData = data;
+    while(currentData.stop_reason === 'tool_use' && rounds < 5) {
+      rounds++;
+      // Add assistant response to history
+      fullMessages.push({ role: 'assistant', content: currentData.content });
+
+      // Build tool results for all tool_use blocks
+      const toolResults = currentData.content
+        .filter(b => b.type === 'tool_use')
+        .map(b => ({
+          type: 'tool_result',
+          tool_use_id: b.id,
+          content: b.input ? JSON.stringify(b.input) : 'search completed'
+        }));
+
+      fullMessages.push({ role: 'user', content: toolResults });
+
+      const cont = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': CLAUDE_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4000,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          messages: fullMessages
+        })
+      });
+      if(!cont.ok) break;
+      currentData = await cont.json();
+      finalContent = currentData.content;
+    }
+
+    // Extract all text blocks from final response
     let text = '';
-    for(const block of data.content) {
+    for(const block of finalContent) {
       if(block.type === 'text') text += block.text;
     }
 
-    // Robust JSON extraction — handles extra text, markdown, and partial tool responses
+    // Robust JSON extraction — handles extra text and markdown fences
     let analysis = null;
-    const clean = text.replace(/```json|```/g, '').trim();
-    
-    // Try multiple extraction strategies
+    const clean = text.replace(/```json|```/gi, '').trim();
+
     const strategies = [
-      // Strategy 1: Direct parse
       () => JSON.parse(clean),
-      // Strategy 2: Find outermost { }
-      () => {
-        const s = clean.indexOf('{');
-        const e = clean.lastIndexOf('}') + 1;
-        return JSON.parse(clean.slice(s, e));
-      },
-      // Strategy 3: Find JSON after any preamble text
-      () => {
-        const match = clean.match(/\{[\s\S]*\}/);
-        if(!match) throw new Error('No JSON found');
-        return JSON.parse(match[0]);
-      }
+      () => { const s=clean.indexOf('{'); const e=clean.lastIndexOf('}')+1; return JSON.parse(clean.slice(s,e)); },
+      () => { const m=clean.match(/\{[\s\S]*\}/); if(!m) throw new Error('No JSON'); return JSON.parse(m[0]); }
     ];
-    
+
     for(const strategy of strategies) {
       try { analysis = strategy(); break; } catch(e) { continue; }
     }
-    
+
     if(!analysis) throw new Error('Could not parse Claude response as JSON');
 
     localStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(analysis));
