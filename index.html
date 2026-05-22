@@ -994,10 +994,16 @@ function showToast(msg) {
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 function setUpdateTime() {
-  const now=new Date();
-  document.getElementById('updateTime').textContent=
-    'Actualizado '+now.toLocaleDateString('es-CL',{day:'2-digit',month:'short'})+' · '+
-    now.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+  const now = new Date();
+  const time = now.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const el = document.getElementById('updateTime');
+  if(el) {
+    const wsOk = binanceWS && binanceWS.readyState === WebSocket.OPEN;
+    el.innerHTML = (wsOk
+      ? '<span style="color:var(--green)">⬤</span> EN VIVO · '
+      : '<span style="color:var(--gold)">⬤</span> Conectando · ')
+      + time;
+  }
 }
 
 // ── TradingView widget builder ──
@@ -1228,115 +1234,259 @@ function closeModal(e) {
 
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeStressModal(); });
 
-// ── Fetch Crypto ──
-async function fetchCrypto() {
-  const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true');
-  if(!r.ok) throw new Error('CoinGecko '+r.status);
-  return r.json();
-}
+// ══════════════════════════════════════════════════════════
+// REAL-TIME PRICE ENGINE
+// BTC/ETH  → Binance WebSocket (updates every second)
+// XAU/XAG  → metals-api.com proxy every 5s
+// USD/CLP  → exchangerate-api every 30s
+// Indices  → Yahoo Finance proxy every 15s (HYG,VIX,SPX,NDX,US10Y)
+// ══════════════════════════════════════════════════════════
 
-// ── Fetch Metals ──
-async function fetchMetals() {
-  try {
-    const r = await fetch('https://api.metals.live/v1/spot/gold,silver');
-    if(r.ok){ const d=await r.json(); return {xau:d[0]?.price,xauChg:null,xag:d[1]?.price,xagChg:null}; }
-  } catch(e){}
-  return {xau:4521, xauChg:-0.42, xag:76.14, xagChg:-0.71};
-}
+// ── State ──
+const priceState = {
+  btc: null, btcChg: null,
+  eth: null, ethChg: null,
+  xau: null, xauChg: null,
+  xag: null, xagChg: null,
+  clp: null,
+  hyg: null, vix: null, spx: null, ndx: null, us10y: null
+};
 
-// ── Fetch USD/CLP ──
-async function fetchCLP() {
-  try {
-    const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-    if(r.ok){ const d=await r.json(); return d.rates?.CLP||null; }
-  } catch(e){}
-  return 940;
-}
-
-// ── DOM updates ──
+// ── DOM update helpers ──
 function updateCard(id, price, chgPct, vol, mktCap) {
-  const pe=document.getElementById(id+'Price');
-  if(pe) pe.textContent=fmtPrice(price);
-  const ce=document.getElementById(id+'Chg');
-  if(ce){ const c=fmtChg(chgPct); ce.textContent=c.text; ce.className='stat-value '+(chgPct>=0?'up':'down'); }
-  if(vol){ const ve=document.getElementById(id+'Vol'); if(ve) ve.textContent=fmt(vol); }
-  if(mktCap){ const me=document.getElementById(id+'Mkt'); if(me) me.textContent=fmt(mktCap); }
+  const pe = document.getElementById(id+'Price');
+  if(pe) pe.textContent = fmtPrice(price);
+  const ce = document.getElementById(id+'Chg');
+  if(ce) { const c = fmtChg(chgPct); ce.textContent = c.text; ce.className = 'stat-value '+(chgPct >= 0 ? 'up' : 'down'); }
+  if(vol) { const ve = document.getElementById(id+'Vol'); if(ve) ve.textContent = fmt(vol); }
+  if(mktCap) { const me = document.getElementById(id+'Mkt'); if(me) me.textContent = fmt(mktCap); }
 }
 
 function updateTicker(id, price, chgPct) {
-  const pe=document.getElementById('h'+id); if(pe) pe.textContent=fmtPrice(price);
-  const ce=document.getElementById('h'+id+'c');
-  if(ce){ const c=fmtChg(chgPct); ce.textContent=c.text; ce.className='tick-chg '+(chgPct===null?'chg-flat':chgPct>=0?'chg-up':'chg-down'); }
+  const pe = document.getElementById('h'+id); if(pe) pe.textContent = fmtPrice(price);
+  const ce = document.getElementById('h'+id+'c');
+  if(ce) { const c = fmtChg(chgPct); ce.textContent = c.text; ce.className = 'tick-chg '+(chgPct === null ? 'chg-flat' : chgPct >= 0 ? 'chg-up' : 'chg-down'); }
 }
 
 function updateSL(distId, currId, currentPrice, slPrice) {
-  const dist=((slPrice-currentPrice)/currentPrice*100);
-  const de=document.getElementById(distId); if(de) de.textContent=Math.abs(dist).toFixed(1)+'% distancia';
-  const ce=document.getElementById(currId); if(ce) ce.textContent=fmtPrice(currentPrice);
+  const dist = ((slPrice - currentPrice) / currentPrice * 100);
+  const de = document.getElementById(distId); if(de) de.textContent = Math.abs(dist).toFixed(1)+'% distancia';
+  const ce = document.getElementById(currId); if(ce) ce.textContent = fmtPrice(currentPrice);
 }
 
-// ── Main refresh ──
-async function refreshPrices() {
-  const btn=document.getElementById('refreshBtn');
-  btn.classList.add('loading');
-  showToast('Actualizando precios en vivo…');
+function applyPrice(asset, price, chg) {
+  if(!price) return;
+  priceState[asset] = price;
+  if(chg !== undefined) priceState[asset+'Chg'] = chg;
+
+  if(asset === 'btc') {
+    updateCard('btc', price, priceState.btcChg, null, null);
+    updateTicker('BTC', price, priceState.btcChg);
+    updateSL('slBtcDist','slBtcCurrent', price, SL.btc);
+    const el = document.getElementById('scBtcPrice'); if(el) el.textContent = fmtPrice(price);
+  } else if(asset === 'eth') {
+    updateCard('eth', price, priceState.ethChg, null, null);
+    updateTicker('ETH', price, priceState.ethChg);
+    updateSL('slEthDist','slEthCurrent', price, SL.eth);
+    const el = document.getElementById('scEthPrice'); if(el) el.textContent = fmtPrice(price);
+  } else if(asset === 'xau') {
+    updateCard('xau', price, priceState.xauChg, null, null);
+    updateTicker('XAU', price, priceState.xauChg);
+    updateSL('slXauDist','slXauCurrent', price, SL.xau);
+    const el = document.getElementById('scXauPrice'); if(el) el.textContent = fmtPrice(price);
+    updateGSR();
+  } else if(asset === 'xag') {
+    updateCard('xag', price, priceState.xagChg, null, null);
+    updateTicker('XAG', price, priceState.xagChg);
+    updateSL('slXagDist','slXagCurrent', price, SL.xag);
+    const el = document.getElementById('scXagPrice'); if(el) el.textContent = fmtPrice(price);
+    updateGSR();
+  } else if(asset === 'clp') {
+    const el = document.getElementById('clpVal'); if(el) el.textContent = '$'+Math.round(price).toLocaleString('es-CL');
+    updateTicker('CLP', Math.round(price), null);
+  }
+}
+
+function updateGSR() {
+  if(priceState.xau && priceState.xag) {
+    const el = document.getElementById('gsrVal');
+    if(el) el.textContent = (priceState.xau / priceState.xag).toFixed(1)+'x';
+  }
+}
+
+// ── 1. Binance WebSocket — BTC & ETH al segundo ──
+let binanceWS = null;
+
+function connectBinance() {
+  // Single stream for both BTC and ETH miniTicker
+  const url = 'wss://stream.binance.com:9443/stream?streams=btcusdt@miniTicker/ethusdt@miniTicker';
+  binanceWS = new WebSocket(url);
+
+  binanceWS.onopen = () => {
+    console.log('Binance WS connected');
+    showToast('⚡ Conectado a Binance — tiempo real');
+  };
+
+  binanceWS.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+      const d = msg.data;
+      if(!d) return;
+      const price = parseFloat(d.c);   // current price
+      const open  = parseFloat(d.o);   // 24h open
+      const chg   = ((price - open) / open) * 100;
+
+      if(d.s === 'BTCUSDT') {
+        applyPrice('btc', price, chg);
+        // Update volume and market cap when available
+        const volEl = document.getElementById('btcVol');
+        if(volEl) volEl.textContent = fmt(parseFloat(d.q)); // quote volume in USD
+      } else if(d.s === 'ETHUSDT') {
+        applyPrice('eth', price, chg);
+        const volEl = document.getElementById('ethVol');
+        if(volEl) volEl.textContent = fmt(parseFloat(d.q));
+      }
+      setUpdateTime();
+    } catch(e) {}
+  };
+
+  binanceWS.onerror = () => console.warn('Binance WS error');
+
+  binanceWS.onclose = () => {
+    console.warn('Binance WS closed — reconnecting in 3s');
+    setTimeout(connectBinance, 3000); // auto-reconnect
+  };
+}
+
+// ── 2. Metals — Oro y Plata cada 5s ──
+async function fetchMetals() {
+  // Primary: metals.live (free, no CORS issues from GitHub Pages)
   try {
-    const [crypto, metals, clp] = await Promise.all([
-      fetchCrypto().catch(()=>null),
-      fetchMetals().catch(()=>({xau:4521,xauChg:-0.42,xag:76.14,xagChg:-0.71})),
-      fetchCLP().catch(()=>940)
-    ]);
-    if(crypto?.bitcoin){
-      const b=crypto.bitcoin;
-      updateCard('btc',b.usd,b.usd_24h_change,b.usd_24h_vol,b.usd_market_cap);
-      updateTicker('BTC',b.usd,b.usd_24h_change);
-      updateSL('slBtcDist','slBtcCurrent',b.usd,SL.btc);
-      document.getElementById('scBtcPrice').textContent=fmtPrice(b.usd);
-      lastPrices.btc=b.usd;
+    const r = await fetch('https://api.metals.live/v1/spot/gold,silver');
+    if(r.ok) {
+      const d = await r.json();
+      const xau = d[0]?.price || d.find(x=>x.gold)?.gold;
+      const xag = d[1]?.price || d.find(x=>x.silver)?.silver;
+      if(xau) applyPrice('xau', xau, null);
+      if(xag) applyPrice('xag', xag, null);
+      return;
     }
-    if(crypto?.ethereum){
-      const e=crypto.ethereum;
-      updateCard('eth',e.usd,e.usd_24h_change,e.usd_24h_vol,e.usd_market_cap);
-      updateTicker('ETH',e.usd,e.usd_24h_change);
-      updateSL('slEthDist','slEthCurrent',e.usd,SL.eth);
-      document.getElementById('scEthPrice').textContent=fmtPrice(e.usd);
-      lastPrices.eth=e.usd;
+  } catch(e) {}
+
+  // Fallback: via allorigins CORS proxy
+  try {
+    const proxy = 'https://api.allorigins.win/get?url=';
+    const target = encodeURIComponent('https://api.metals.live/v1/spot/gold,silver');
+    const r = await fetch(proxy + target);
+    if(r.ok) {
+      const wrapper = await r.json();
+      const d = JSON.parse(wrapper.contents);
+      const xau = d[0]?.price;
+      const xag = d[1]?.price;
+      if(xau) applyPrice('xau', xau, null);
+      if(xag) applyPrice('xag', xag, null);
     }
-    if(metals?.xau){
-      updateCard('xau',metals.xau,metals.xauChg,null,null);
-      updateTicker('XAU',metals.xau,metals.xauChg);
-      updateSL('slXauDist','slXauCurrent',metals.xau,SL.xau);
-      document.getElementById('scXauPrice').textContent=fmtPrice(metals.xau);
-      lastPrices.xau=metals.xau;
+  } catch(e) {}
+}
+
+// ── 3. USD/CLP cada 30s ──
+async function fetchCLP() {
+  try {
+    const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    if(r.ok) {
+      const d = await r.json();
+      if(d.rates?.CLP) applyPrice('clp', d.rates.CLP, null);
     }
-    if(metals?.xag){
-      updateCard('xag',metals.xag,metals.xagChg,null,null);
-      updateTicker('XAG',metals.xag,metals.xagChg);
-      updateSL('slXagDist','slXagCurrent',metals.xag,SL.xag);
-      document.getElementById('scXagPrice').textContent=fmtPrice(metals.xag);
-      lastPrices.xag=metals.xag;
-      if(lastPrices.xau) document.getElementById('gsrVal').textContent=(lastPrices.xau/metals.xag).toFixed(1)+'x';
-    }
-    if(clp){
-      document.getElementById('clpVal').textContent='$'+Math.round(clp).toLocaleString('es-CL');
-      updateTicker('CLP',Math.round(clp),null);
-    }
-    setUpdateTime();
-    showToast('✓ Precios actualizados');
-  } catch(err) {
-    showToast('⚠ Error parcial — algunos datos son estáticos');
-    setUpdateTime();
+  } catch(e) {}
+}
+
+// ── 4. Yahoo Finance indices cada 15s (HYG, VIX, SPX, NDX, US10Y) ──
+async function fetchIndices() {
+  const symbols = ['HYG','%5EVIX','%5EGSPC','%5EIXIC','%5ETNX']; // TNX = US10Y *10
+  const keys    = ['hyg','vix','spx','ndx','us10y'];
+
+  for(let i = 0; i < symbols.length; i++) {
+    try {
+      const proxy = 'https://api.allorigins.win/get?url=';
+      const target = encodeURIComponent(
+        `https://query1.finance.yahoo.com/v8/finance/chart/${symbols[i]}?interval=1m&range=1d`
+      );
+      const r = await fetch(proxy + target);
+      if(!r.ok) continue;
+      const wrapper = await r.json();
+      const data = JSON.parse(wrapper.contents);
+      const meta = data?.chart?.result?.[0]?.meta;
+      if(!meta) continue;
+      const price = meta.regularMarketPrice;
+      const prevClose = meta.chartPreviousClose || meta.previousClose;
+      const chg = prevClose ? ((price - prevClose) / prevClose * 100) : null;
+
+      // Update stress indicator values in the cards
+      const key = keys[i];
+      priceState[key] = price;
+
+      // Find and update the stress card value
+      const stressVals = document.querySelectorAll('.stress-value');
+      const stressNames = ['HYG ETF','MOVE Index','US 10Y Yield','S&P 500','NASDAQ 100'];
+      // Map by position in stress grid
+      const stressMap = { 'hyg': 0, 'vix': null, 'us10y': 2, 'spx': 3, 'ndx': 4 };
+      const idx = stressMap[key];
+      if(idx !== null && idx !== undefined && stressVals[idx]) {
+        if(key === 'us10y') {
+          stressVals[idx].textContent = (price/10).toFixed(2)+'%'; // TNX is in tenths
+        } else if(key === 'hyg') {
+          stressVals[idx].textContent = '$'+price.toFixed(2);
+        } else if(key === 'spx') {
+          stressVals[idx].textContent = price.toLocaleString('es-CL',{maximumFractionDigits:0});
+        } else if(key === 'ndx') {
+          stressVals[idx].textContent = price.toLocaleString('es-CL',{maximumFractionDigits:0});
+        }
+      }
+
+      // Update header ticker if present
+      if(key === 'us10y') updateTicker('10Y', price/10, chg);
+
+    } catch(e) { continue; }
+  }
+}
+
+// ── Manual refresh button ──
+async function refreshPrices() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('loading');
+  showToast('Actualizando todos los precios…');
+  await Promise.all([
+    fetchMetals(),
+    fetchCLP(),
+    fetchIndices()
+  ]);
+  // Reconnect Binance if closed
+  if(!binanceWS || binanceWS.readyState === WebSocket.CLOSED) {
+    connectBinance();
   }
   btn.classList.remove('loading');
+  showToast('✓ Todo actualizado');
+}
+
+// ── Auto-update intervals ──
+function startAutoUpdates() {
+  fetchMetals();                              // immediate
+  fetchCLP();
+  fetchIndices();
+  setInterval(fetchMetals,   5000);          // metals every 5s
+  setInterval(fetchCLP,      30000);         // CLP every 30s
+  setInterval(fetchIndices,  15000);         // indices every 15s
+  setInterval(setUpdateTime, 1000);          // clock every 1s
 }
 
 // ── Init ──
-document.addEventListener('DOMContentLoaded',()=>{
-  const now=new Date();
-  document.getElementById('dateLabel').textContent=
+document.addEventListener('DOMContentLoaded', () => {
+  const now = new Date();
+  document.getElementById('dateLabel').textContent =
     now.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
-  refreshPrices();
   initMainChart();
+  connectBinance();      // BTC/ETH WebSocket — real time
+  startAutoUpdates();    // everything else
 });
 </script>
 </body>
