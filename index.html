@@ -792,42 +792,16 @@ header{border-bottom:1px solid var(--border);background:linear-gradient(180deg,r
     <span class="section-eyebrow">Proyecciones</span>
     <span class="section-title">Escenarios — Próximos 7 Días</span>
     <div class="section-rule"></div>
+    <span id="scenariosDate" style="font-family:var(--mono);font-size:9px;color:var(--text3);">—</span>
   </div>
-  <div class="scenarios-grid">
-    <!-- BTC -->
-    <div class="scenario-card">
-      <div class="scenario-card-header"><span class="sc-asset">₿ Bitcoin</span><span class="sc-price" id="scBtcPrice">$77,400</span></div>
-      <div class="sc-table-head"><span class="sc-th">Escenario</span><span class="sc-th">Gatillo</span><span class="sc-th">Prob.</span><span class="sc-th">Objetivo</span></div>
-      <div class="sc-row"><span class="sc-type sc-bull">▲ Alcista</span><span class="sc-trigger">Acuerdo Irán + ETF inflows + Warsh insinúa recorte</span><span class="sc-prob sc-bull">30%</span><span class="sc-target">$82K–$85K</span></div>
-      <div class="sc-row"><span class="sc-type sc-base">→ Base</span><span class="sc-trigger">Consolidación. Yields altos sin escalada nueva</span><span class="sc-prob sc-base">50%</span><span class="sc-target">$74K–$78K</span></div>
-      <div class="sc-row"><span class="sc-type sc-bear">▼ Bajista</span><span class="sc-trigger">Escalada bélica + inflación sorprende al alza</span><span class="sc-prob sc-bear">20%</span><span class="sc-target">$68K–$72K</span></div>
-    </div>
-    <!-- ETH -->
-    <div class="scenario-card">
-      <div class="scenario-card-header"><span class="sc-asset">Ξ Ethereum</span><span class="sc-price" id="scEthPrice">$2,127</span></div>
-      <div class="sc-table-head"><span class="sc-th">Escenario</span><span class="sc-th">Gatillo</span><span class="sc-th">Prob.</span><span class="sc-th">Objetivo</span></div>
-      <div class="sc-row"><span class="sc-type sc-bull">▲ Alcista</span><span class="sc-trigger">RSI sobrevendido + rebote técnico + noticias Vitalik</span><span class="sc-prob sc-bull">20%</span><span class="sc-target">$2,280–$2,500</span></div>
-      <div class="sc-row"><span class="sc-type sc-base">→ Base</span><span class="sc-trigger">Soporte $2,050 se prueba pero aguanta</span><span class="sc-prob sc-base">45%</span><span class="sc-target">$1,980–$2,200</span></div>
-      <div class="sc-row"><span class="sc-type sc-bear">▼ Bajista</span><span class="sc-trigger">Ruptura $2,050 + más salidas institucionales</span><span class="sc-prob sc-bear">35%</span><span class="sc-target">$1,700–$1,950</span></div>
-    </div>
-    <!-- ORO -->
-    <div class="scenario-card">
-      <div class="scenario-card-header"><span class="sc-asset">◈ Oro</span><span class="sc-price" id="scXauPrice">$4,521</span></div>
-      <div class="sc-table-head"><span class="sc-th">Escenario</span><span class="sc-th">Gatillo</span><span class="sc-th">Prob.</span><span class="sc-th">Objetivo</span></div>
-      <div class="sc-row"><span class="sc-type sc-bull">▲ Alcista</span><span class="sc-trigger">Colapso negociaciones Irán + bancos centrales compran</span><span class="sc-prob sc-bull">35%</span><span class="sc-target">$4,577–$4,700</span></div>
-      <div class="sc-row"><span class="sc-type sc-base">→ Base</span><span class="sc-trigger">Consolidación sobre soporte $4,441</span><span class="sc-prob sc-base">45%</span><span class="sc-target">$4,440–$4,560</span></div>
-      <div class="sc-row"><span class="sc-type sc-bear">▼ Bajista</span><span class="sc-trigger">Acuerdo paz Irán + fortaleza dólar</span><span class="sc-prob sc-bear">20%</span><span class="sc-target">$4,380–$4,440</span></div>
-    </div>
-    <!-- PLATA -->
-    <div class="scenario-card">
-      <div class="scenario-card-header"><span class="sc-asset">◫ Plata</span><span class="sc-price" id="scXagPrice">$76.14</span></div>
-      <div class="sc-table-head"><span class="sc-th">Escenario</span><span class="sc-th">Gatillo</span><span class="sc-th">Prob.</span><span class="sc-th">Objetivo</span></div>
-      <div class="sc-row"><span class="sc-type sc-bull">▲ Alcista</span><span class="sc-trigger">Demanda industrial solar/EV + apetito riesgo</span><span class="sc-prob sc-bull">25%</span><span class="sc-target">$79–$82</span></div>
-      <div class="sc-row"><span class="sc-type sc-base">→ Base</span><span class="sc-trigger">Técnico neutro, consolidación zona $74–$77</span><span class="sc-prob sc-base">45%</span><span class="sc-target">$74–$77</span></div>
-      <div class="sc-row"><span class="sc-type sc-bear">▼ Bajista</span><span class="sc-trigger">Dólar fuerte + toma ganancias (↑126% en 1 año)</span><span class="sc-prob sc-bear">30%</span><span class="sc-target">$70–$74</span></div>
-    </div>
+  <div class="scenarios-grid" id="scenariosGrid">
+    <!-- Loading placeholders -->
+    <div class="scenario-card"><div class="scenario-card-header"><span class="sc-asset">₿ Bitcoin</span><span class="sc-price">—</span></div><div style="padding:20px;"><span class="skeleton" style="width:100%;display:block;height:12px;margin-bottom:8px;">&nbsp;</span><span class="skeleton" style="width:80%;display:block;height:12px;margin-bottom:8px;">&nbsp;</span><span class="skeleton" style="width:90%;display:block;height:12px;">&nbsp;</span></div></div>
+    <div class="scenario-card"><div class="scenario-card-header"><span class="sc-asset">Ξ Ethereum</span><span class="sc-price">—</span></div><div style="padding:20px;"><span class="skeleton" style="width:100%;display:block;height:12px;margin-bottom:8px;">&nbsp;</span><span class="skeleton" style="width:80%;display:block;height:12px;margin-bottom:8px;">&nbsp;</span><span class="skeleton" style="width:90%;display:block;height:12px;">&nbsp;</span></div></div>
+    <div class="scenario-card"><div class="scenario-card-header"><span class="sc-asset">◈ Oro</span><span class="sc-price">—</span></div><div style="padding:20px;"><span class="skeleton" style="width:100%;display:block;height:12px;margin-bottom:8px;">&nbsp;</span><span class="skeleton" style="width:80%;display:block;height:12px;margin-bottom:8px;">&nbsp;</span><span class="skeleton" style="width:90%;display:block;height:12px;">&nbsp;</span></div></div>
+    <div class="scenario-card"><div class="scenario-card-header"><span class="sc-asset">◫ Plata</span><span class="sc-price">—</span></div><div style="padding:20px;"><span class="skeleton" style="width:100%;display:block;height:12px;margin-bottom:8px;">&nbsp;</span><span class="skeleton" style="width:80%;display:block;height:12px;margin-bottom:8px;">&nbsp;</span><span class="skeleton" style="width:90%;display:block;height:12px;">&nbsp;</span></div></div>
   </div>
-</div>
+</div></div>
 
 <!-- § STOP LOSS -->
 <div class="sl-section">
@@ -836,47 +810,11 @@ header{border-bottom:1px solid var(--border);background:linear-gradient(180deg,r
     <span class="section-title">Evaluación de Stop Loss</span>
     <div class="section-rule"></div>
   </div>
-  <div class="sl-cards">
-    <div class="sl-card">
-      <div class="sl-asset-name">Bitcoin</div><div class="sl-pair">BTC / USD</div>
-      <div class="sl-numbers">
-        <div><div class="sl-num-label">Precio Actual</div><div class="sl-num-val current" id="slBtcCurrent">$77,400</div></div>
-        <div style="text-align:right"><div class="sl-num-label">Stop Loss</div><div class="sl-num-val stop">$30,000</div></div>
-      </div>
-      <div class="sl-progress-track"><div class="sl-progress-fill fill-safe" style="width:88%"></div></div>
-      <div class="sl-distance-info"><span>SL $30K</span><span id="slBtcDist">−61.2% distancia</span></div>
-      <div class="sl-status-badge"><span style="color:var(--green)">●</span><span style="color:var(--green);font-weight:500">SEGURO</span><span style="color:var(--text3);margin-left:4px">· Colchón amplio</span></div>
-    </div>
-    <div class="sl-card">
-      <div class="sl-asset-name">Ethereum</div><div class="sl-pair">ETH / USD</div>
-      <div class="sl-numbers">
-        <div><div class="sl-num-label">Precio Actual</div><div class="sl-num-val current" id="slEthCurrent">$2,127</div></div>
-        <div style="text-align:right"><div class="sl-num-label">Stop Loss</div><div class="sl-num-val stop">$1,280</div></div>
-      </div>
-      <div class="sl-progress-track"><div class="sl-progress-fill fill-warn" style="width:66%"></div></div>
-      <div class="sl-distance-info"><span>SL $1,280</span><span id="slEthDist" style="color:var(--gold2)">−39.8% distancia</span></div>
-      <div class="sl-status-badge"><span style="color:var(--gold)">●</span><span style="color:var(--gold2);font-weight:500">VIGILAR</span><span style="color:var(--text3);margin-left:4px">· ETH en tendencia bajista</span></div>
-    </div>
-    <div class="sl-card">
-      <div class="sl-asset-name">Oro</div><div class="sl-pair">XAU / USD</div>
-      <div class="sl-numbers">
-        <div><div class="sl-num-label">Precio Actual</div><div class="sl-num-val current" id="slXauCurrent">$4,521</div></div>
-        <div style="text-align:right"><div class="sl-num-label">Stop Loss</div><div class="sl-num-val stop">$2,500</div></div>
-      </div>
-      <div class="sl-progress-track"><div class="sl-progress-fill fill-safe" style="width:95%"></div></div>
-      <div class="sl-distance-info"><span>SL $2,500</span><span id="slXauDist">−44.7% distancia</span></div>
-      <div class="sl-status-badge"><span style="color:var(--green)">●</span><span style="color:var(--green);font-weight:500">MUY SEGURO</span><span style="color:var(--text3);margin-left:4px">· +80% desde SL</span></div>
-    </div>
-    <div class="sl-card">
-      <div class="sl-asset-name">Plata</div><div class="sl-pair">XAG / USD</div>
-      <div class="sl-numbers">
-        <div><div class="sl-num-label">Precio Actual</div><div class="sl-num-val current" id="slXagCurrent">$76.14</div></div>
-        <div style="text-align:right"><div class="sl-num-label">Stop Loss</div><div class="sl-num-val stop">$30.00</div></div>
-      </div>
-      <div class="sl-progress-track"><div class="sl-progress-fill fill-safe" style="width:97%"></div></div>
-      <div class="sl-distance-info"><span>SL $30</span><span id="slXagDist">−60.6% distancia</span></div>
-      <div class="sl-status-badge"><span style="color:var(--green)">●</span><span style="color:var(--green);font-weight:500">MUY SEGURO</span><span style="color:var(--text3);margin-left:4px">· Trailing stop recomendado</span></div>
-    </div>
+  <div class="sl-cards" id="slCards">
+    <div class="sl-card"><div class="sl-asset-name">Bitcoin</div><div class="sl-pair">BTC / USD</div><div style="margin-top:12px;"><span class="skeleton" style="width:100%;display:block;height:10px;margin-bottom:8px;">&nbsp;</span><span class="skeleton" style="width:70%;display:block;height:10px;">&nbsp;</span></div></div>
+    <div class="sl-card"><div class="sl-asset-name">Ethereum</div><div class="sl-pair">ETH / USD</div><div style="margin-top:12px;"><span class="skeleton" style="width:100%;display:block;height:10px;margin-bottom:8px;">&nbsp;</span><span class="skeleton" style="width:70%;display:block;height:10px;">&nbsp;</span></div></div>
+    <div class="sl-card"><div class="sl-asset-name">Oro</div><div class="sl-pair">XAU / USD</div><div style="margin-top:12px;"><span class="skeleton" style="width:100%;display:block;height:10px;margin-bottom:8px;">&nbsp;</span><span class="skeleton" style="width:70%;display:block;height:10px;">&nbsp;</span></div></div>
+    <div class="sl-card"><div class="sl-asset-name">Plata</div><div class="sl-pair">XAG / USD</div><div style="margin-top:12px;"><span class="skeleton" style="width:100%;display:block;height:10px;margin-bottom:8px;">&nbsp;</span><span class="skeleton" style="width:70%;display:block;height:10px;">&nbsp;</span></div></div>
   </div>
 </div>
 
@@ -886,48 +824,13 @@ header{border-bottom:1px solid var(--border);background:linear-gradient(180deg,r
     <span class="section-eyebrow">Figuras Clave</span>
     <span class="section-title">Declaraciones que Mueven el Mercado</span>
     <div class="section-rule"></div>
-    <span style="font-family:var(--mono);font-size:9px;color:var(--text3);">Haz clic para leer la fuente completa</span>
+    <span id="quotesDate" style="font-family:var(--mono);font-size:9px;color:var(--text3);">Buscando noticias de hoy…</span>
   </div>
-  <div class="quotes-grid">
-    <a class="quote-card quote-card-link" href="https://www.cnbc.com/2026/05/16/kevin-warsh-comes-into-the-fed-facing-a-big-family-fight-over-cutting-interest-rates.html" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">
-      <div class="quote-who">
-        <div class="quote-avatar">🏦</div>
-        <div><div class="quote-name">Kevin Warsh</div><div class="quote-role">PRESIDENTE FED · DESDE 15 MAY 2026</div></div>
-        <span class="quote-source-tag">CNBC ↗</span>
-      </div>
-      <div class="quote-text">"Hay un gran debate familiar dentro de la Fed sobre la dirección correcta de las tasas. Mi trabajo es unificar al comité hacia una política que equilibre inflación y crecimiento."</div>
-      <div class="quote-impact"><strong>Impacto:</strong> Llega con presión de Trump para bajar tasas, pero inflación al 4% y FOMC dividido se lo impiden. Tres miembros votaron por eliminar el sesgo expansivo. Sin recortes en 2026 = presión sobre BTC y cripto.</div>
-    </a>
-    <a class="quote-card quote-card-link" href="https://www.usnews.com/news/national-news/articles/2026-05-15/chosen-to-lower-interest-rates-kevin-warsh-may-find-the-fed-has-other-ideas" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">
-      <div class="quote-who">
-        <div class="quote-avatar">🇺🇸</div>
-        <div><div class="quote-name">Donald Trump</div><div class="quote-role">PRESIDENTE EE.UU. · TRUTH SOCIAL, MAYO 2026</div></div>
-        <span class="quote-source-tag">US News ↗</span>
-      </div>
-      <div class="quote-text">"Espero que la guerra con Irán termine muy, muy rápidamente. Las tasas de interés DEBEN bajar sustancialmente. Tenemos a alguien muy bueno en la Fed."</div>
-      <div class="quote-impact"><strong>Impacto:</strong> Si Irán se cierra → petróleo baja → inflación cede → posible corte tasas → escenario muy alcista para todo. Por ahora ninguna de las dos cosas ha ocurrido.</div>
-    </a>
-    <a class="quote-card quote-card-link" href="https://www.cbsnews.com/news/kevin-warsh-federal-reserve-chair-interest-rates/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">
-      <div class="quote-who">
-        <div class="quote-avatar">⚖️</div>
-        <div><div class="quote-name">Jerome Powell</div><div class="quote-role">EX-PRESIDENTE FED / GOBERNADOR · ABR 2026</div></div>
-        <span class="quote-source-tag">CBS News ↗</span>
-      </div>
-      <div class="quote-text">"Planeamos mantener un perfil bajo. Solo hay un presidente de la Fed. La independencia del banco central es esencial para tomar decisiones basadas en análisis, no en política."</div>
-      <div class="quote-impact"><strong>Impacto:</strong> Se queda como gobernador hasta 2028. El mercado lo lee como "ancla anti-inflacionaria" que podría frenar recortes prematuros de Warsh.</div>
-    </a>
-    <a class="quote-card quote-card-link" href="https://www.coinbase.com/price/ethereum" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">
-      <div class="quote-who">
-        <div class="quote-avatar">Ξ</div>
-        <div><div class="quote-name">Vitalik Buterin</div><div class="quote-role">CO-FUNDADOR ETHEREUM · X, MAYO 2026</div></div>
-        <span class="quote-source-tag">Coinbase ↗</span>
-      </div>
-      <div class="quote-text">"La privacidad es la pieza que le falta a Ethereum para tener verdaderas cualidades de dinero. Estoy enfocado en mejoras de privacidad a corto plazo."</div>
-      <div class="quote-impact"><strong>Impacto:</strong> Responde a crisis interna ETH: salida de figuras clave, caída de precio. Harvard vendió todo su ETF de ETH esta semana. El mercado aún no premia sus palabras.</div>
-    </a>
+  <div class="quotes-grid" id="quotesGrid">
+    <div class="quote-card"><div class="quote-who"><div class="quote-avatar">⏳</div><div><div class="quote-name" style="color:var(--text2);">Cargando…</div><div class="quote-role">Buscando declaraciones recientes</div></div></div><div class="quote-text"><span class="skeleton" style="width:100%;display:block;height:12px;margin-bottom:6px;">&nbsp;</span><span class="skeleton" style="width:80%;display:block;height:12px;">&nbsp;</span></div></div>
+    <div class="quote-card"><div class="quote-who"><div class="quote-avatar">⏳</div><div><div class="quote-name" style="color:var(--text2);">Cargando…</div><div class="quote-role">Buscando declaraciones recientes</div></div></div><div class="quote-text"><span class="skeleton" style="width:100%;display:block;height:12px;margin-bottom:6px;">&nbsp;</span><span class="skeleton" style="width:80%;display:block;height:12px;">&nbsp;</span></div></div>
   </div>
 </div>
-
 </main>
 
 <!-- FOOTER -->
@@ -1540,106 +1443,168 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ══════════════════════════════════════════════════════════
-// CLAUDE API — Análisis diario automático
-// Genera resumen, recomendaciones y riesgos con datos reales
-// Se ejecuta una vez al día (cacheado en localStorage)
+// CLAUDE API — Full dashboard intelligence engine
+// Generates: analysis, recommendations, risks, scenarios,
+//             stop loss evaluation, and live news quotes
+// Uses web_search tool for real news and declarations
+// Cached once per day in localStorage
 // ══════════════════════════════════════════════════════════
 
 const CLAUDE_KEY_STORAGE = 'neoadapa_claude_key';
+const ANALYSIS_CACHE_KEY = 'neoadapa_analysis_v2';
+const ANALYSIS_DATE_KEY  = 'neoadapa_analysis_date_v2';
 let CLAUDE_KEY = localStorage.getItem(CLAUDE_KEY_STORAGE) || '';
-const ANALYSIS_CACHE_KEY = 'neoadapa_analysis';
-const ANALYSIS_DATE_KEY  = 'neoadapa_analysis_date';
 
+// ── Save / Check API key ──
 function saveApiKey() {
   const input = document.getElementById('apiKeyInput');
   const val = input.value.trim();
   const errEl = document.getElementById('apiKeyError');
-  
-  if(!val.startsWith('sk-ant-')) {
-    errEl.textContent = 'La key debe empezar con sk-ant-...';
-    return;
-  }
-  
+  if(!val.startsWith('sk-ant-')) { errEl.textContent = 'La key debe empezar con sk-ant-...'; return; }
   CLAUDE_KEY = val;
   localStorage.setItem(CLAUDE_KEY_STORAGE, val);
   document.getElementById('apiKeyModal').classList.remove('open');
-  
-  // Clear analysis cache so it regenerates with new key
   localStorage.removeItem(ANALYSIS_CACHE_KEY);
   localStorage.removeItem(ANALYSIS_DATE_KEY);
-  
   showToast('✓ API Key guardada — generando análisis…');
-  generateAnalysis();
+  generateFullDashboard();
 }
 
 function checkApiKey() {
   const key = localStorage.getItem(CLAUDE_KEY_STORAGE);
-  if(!key) {
-    // Show modal after a short delay so page loads first
-    setTimeout(() => {
-      document.getElementById('apiKeyModal').classList.add('open');
-    }, 1500);
-    return false;
-  }
+  if(!key) { setTimeout(() => document.getElementById('apiKeyModal').classList.add('open'), 1500); return false; }
   CLAUDE_KEY = key;
   return true;
 }
 
-async function generateAnalysis() {
-  if(!checkApiKey()) return; // Show modal if no key
+// ── Main intelligence function ──
+async function generateFullDashboard() {
+  if(!checkApiKey()) return;
   const today = new Date().toLocaleDateString('es-CL');
-  
-  // Check cache — only regenerate once per day
+
+  // Use cache if same day
   const cachedDate = localStorage.getItem(ANALYSIS_DATE_KEY);
   const cachedData = localStorage.getItem(ANALYSIS_CACHE_KEY);
-  
   if(cachedDate === today && cachedData) {
-    console.log('Using cached analysis for today');
-    renderAnalysis(JSON.parse(cachedData));
+    console.log('Using cached dashboard for today');
+    renderFullDashboard(JSON.parse(cachedData));
     return;
   }
 
-  // Wait for prices to load (give Binance WS 3s to connect)
-  await new Promise(r => setTimeout(r, 3000));
+  // Wait for live prices
+  await new Promise(r => setTimeout(r, 3500));
 
-  const btc  = priceState.btc  ? '$' + Math.round(priceState.btc).toLocaleString('en') : 'N/A';
-  const eth  = priceState.eth  ? '$' + priceState.eth.toFixed(0) : 'N/A';
-  const xau  = priceState.xau  ? '$' + Math.round(priceState.xau).toLocaleString('en') : 'N/A';
-  const xag  = priceState.xag  ? '$' + priceState.xag.toFixed(2) : 'N/A';
-  const clp  = priceState.clp  ? Math.round(priceState.clp) : 'N/A';
-  const spx  = priceState.spx  ? Math.round(priceState.spx).toLocaleString('en') : 'N/A';
-  const vix  = priceState.vix  ? priceState.vix.toFixed(1) : 'N/A';
-  const us10y = priceState.us10y ? (priceState.us10y/10).toFixed(2)+'%' : 'N/A';
-  const date = new Date().toLocaleDateString('es-CL', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const btc   = priceState.btc   ? '$' + Math.round(priceState.btc).toLocaleString('en')   : 'N/A';
+  const eth   = priceState.eth   ? '$' + priceState.eth.toFixed(0)                          : 'N/A';
+  const xau   = priceState.xau   ? '$' + Math.round(priceState.xau).toLocaleString('en')   : 'N/A';
+  const xag   = priceState.xag   ? '$' + priceState.xag.toFixed(2)                          : 'N/A';
+  const clp   = priceState.clp   ? Math.round(priceState.clp)                               : 'N/A';
+  const spx   = priceState.spx   ? Math.round(priceState.spx).toLocaleString('en')          : 'N/A';
+  const vix   = priceState.vix   ? priceState.vix.toFixed(1)                                : 'N/A';
+  const us10y = priceState.us10y ? (priceState.us10y/10).toFixed(2)+'%'                     : 'N/A';
+  const hyg   = priceState.hyg   ? '$' + priceState.hyg.toFixed(2)                          : 'N/A';
+  const date  = new Date().toLocaleDateString('es-CL', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
-  const prompt = `Eres un analista financiero experto. Genera un análisis de mercado BREVE para hoy ${date}.
+  const prompt = `Eres un analista financiero experto de nivel institucional. Hoy es ${date}.
 
-PRECIOS ACTUALES EN VIVO:
+PRECIOS EN VIVO AHORA MISMO:
 - Bitcoin (BTC): ${btc} USD
-- Ethereum (ETH): ${eth} USD  
-- Oro (XAU): ${xau} USD
-- Plata (XAG): ${xag} USD
+- Ethereum (ETH): ${eth} USD
+- Oro (XAU/USD): ${xau} USD
+- Plata (XAG/USD): ${xag} USD
 - USD/CLP: ${clp}
 - S&P 500: ${spx}
 - VIX: ${vix}
 - US 10Y Yield: ${us10y}
+- HYG ETF: ${hyg}
 
-El usuario tiene una cartera con: BTC, ETH, Oro, Plata, y un Fondo Mutuo Ahorro UF de Banco Itaú Chile.
+CARTERA DEL USUARIO: BTC, ETH, Oro, Plata, y Fondo Mutuo Ahorro UF Banco Itaú Chile.
+STOP LOSS DEFINIDOS: BTC $30,000 | ETH $1,280 | Oro $2,500 | Plata $30
 
-Responde SOLO con un JSON válido con esta estructura exacta (sin markdown, sin explicaciones):
+INSTRUCCIONES:
+1. Usa web_search para buscar noticias financieras relevantes de HOY sobre: Fed/Warsh, Trump economía, conflictos geopolíticos, cripto, metales, Chile economía
+2. Busca declaraciones recientes de figuras clave: Jerome Powell, Kevin Warsh, Trump, líderes cripto
+3. Genera análisis basado en precios reales + noticias encontradas
+
+Responde SOLO con JSON válido (sin markdown, sin texto extra):
 {
-  "resumen": "2-3 oraciones describiendo el estado del mercado hoy con los precios actuales",
+  "resumen": "2-3 oraciones del estado del mercado hoy con precios reales",
   "recomendaciones": [
-    {"activo": "BTC", "accion": "MANTENER", "nota": "razón breve"},
-    {"activo": "ETH", "accion": "PRECAUCIÓN", "nota": "razón breve"},
-    {"activo": "ORO", "accion": "MANTENER", "nota": "razón breve"},
-    {"activo": "PLATA", "accion": "VIGILAR", "nota": "razón breve"},
-    {"activo": "FM UF", "accion": "MANTENER", "nota": "razón breve"}
+    {"activo": "BTC", "accion": "MANTENER", "nota": "razón basada en precio actual"},
+    {"activo": "ETH", "accion": "PRECAUCIÓN", "nota": "razón basada en precio actual"},
+    {"activo": "ORO", "accion": "MANTENER", "nota": "razón basada en precio actual"},
+    {"activo": "PLATA", "accion": "VIGILAR", "nota": "razón basada en precio actual"},
+    {"activo": "FM UF", "accion": "MANTENER", "nota": "contexto Chile/UF actual"}
   ],
-  "riesgos": "3-4 riesgos clave del día, separados por \n\n"
-}
-
-Usa accion: COMPRAR, MANTENER, VIGILAR, PRECAUCIÓN o VENDER según corresponda al contexto real del día.`;
+  "riesgos": "riesgo1 con precio real\\n\\nriesgo2\\n\\nriesgo3\\n\\nriesgo4",
+  "escenarios": [
+    {
+      "activo": "Bitcoin", "simbolo": "₿", "precio_actual": "${btc}",
+      "rows": [
+        {"tipo": "ALCISTA", "prob": "30%", "objetivo": "$82K–$85K", "gatillo": "descripción corta"},
+        {"tipo": "BASE",    "prob": "50%", "objetivo": "$74K–$78K", "gatillo": "descripción corta"},
+        {"tipo": "BAJISTA", "prob": "20%", "objetivo": "$68K–$72K", "gatillo": "descripción corta"}
+      ]
+    },
+    {
+      "activo": "Ethereum", "simbolo": "Ξ", "precio_actual": "${eth}",
+      "rows": [
+        {"tipo": "ALCISTA", "prob": "20%", "objetivo": "rango realista", "gatillo": "descripción"},
+        {"tipo": "BASE",    "prob": "45%", "objetivo": "rango realista", "gatillo": "descripción"},
+        {"tipo": "BAJISTA", "prob": "35%", "objetivo": "rango realista", "gatillo": "descripción"}
+      ]
+    },
+    {
+      "activo": "Oro", "simbolo": "◈", "precio_actual": "${xau}",
+      "rows": [
+        {"tipo": "ALCISTA", "prob": "35%", "objetivo": "rango realista", "gatillo": "descripción"},
+        {"tipo": "BASE",    "prob": "45%", "objetivo": "rango realista", "gatillo": "descripción"},
+        {"tipo": "BAJISTA", "prob": "20%", "objetivo": "rango realista", "gatillo": "descripción"}
+      ]
+    },
+    {
+      "activo": "Plata", "simbolo": "◫", "precio_actual": "${xag}",
+      "rows": [
+        {"tipo": "ALCISTA", "prob": "25%", "objetivo": "rango realista", "gatillo": "descripción"},
+        {"tipo": "BASE",    "prob": "45%", "objetivo": "rango realista", "gatillo": "descripción"},
+        {"tipo": "BAJISTA", "prob": "30%", "objetivo": "rango realista", "gatillo": "descripción"}
+      ]
+    }
+  ],
+  "stopLoss": [
+    {
+      "activo": "Bitcoin", "par": "BTC / USD", "precio_actual": "${btc}",
+      "sl": "$30,000", "distancia_pct": "calcular", "estado": "SEGURO",
+      "color": "green", "nota": "evaluación breve"
+    },
+    {
+      "activo": "Ethereum", "par": "ETH / USD", "precio_actual": "${eth}",
+      "sl": "$1,280", "distancia_pct": "calcular", "estado": "VIGILAR",
+      "color": "gold", "nota": "evaluación breve"
+    },
+    {
+      "activo": "Oro", "par": "XAU / USD", "precio_actual": "${xau}",
+      "sl": "$2,500", "distancia_pct": "calcular", "estado": "MUY SEGURO",
+      "color": "green", "nota": "evaluación breve"
+    },
+    {
+      "activo": "Plata", "par": "XAG / USD", "precio_actual": "${xag}",
+      "sl": "$30", "distancia_pct": "calcular", "estado": "MUY SEGURO",
+      "color": "green", "nota": "evaluación breve"
+    }
+  ],
+  "declaraciones": [
+    {
+      "nombre": "nombre real encontrado en búsqueda",
+      "rol": "cargo actual",
+      "emoji": "emoji apropiado",
+      "fuente": "nombre del medio",
+      "url": "url real del artículo o # si no hay",
+      "cita": "declaración real o paráfrasis fiel de lo encontrado",
+      "impacto": "impacto en la cartera del usuario"
+    }
+  ]
+}`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1652,72 +1617,148 @@ Usa accion: COMPRAR, MANTENER, VIGILAR, PRECAUCIÓN o VENDER según corresponda 
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 800,
+        max_tokens: 4000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
     if(!response.ok) throw new Error('API ' + response.status);
-    
     const data = await response.json();
-    const text = data.content[0].text.trim();
-    
-    // Parse JSON response
+
+    // Extract text from response (may include tool use blocks)
+    let text = '';
+    for(const block of data.content) {
+      if(block.type === 'text') text += block.text;
+    }
+
     const clean = text.replace(/```json|```/g, '').trim();
-    const analysis = JSON.parse(clean);
-    
-    // Cache for today
+    // Find JSON object in response
+    const jsonStart = clean.indexOf('{');
+    const jsonEnd = clean.lastIndexOf('}') + 1;
+    const analysis = JSON.parse(clean.slice(jsonStart, jsonEnd));
+
     localStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(analysis));
     localStorage.setItem(ANALYSIS_DATE_KEY, today);
-    
-    renderAnalysis(analysis);
-    
+    renderFullDashboard(analysis);
+
   } catch(err) {
     console.error('Claude API error:', err);
-    // Show fallback message
-    document.getElementById('analysisBody').innerHTML = 
-      '<span style="color:var(--text3);font-size:12px;">⚠ Análisis no disponible. Verifica tu conexión o la API key.</span>';
+    showToast('⚠ Error generando análisis: ' + err.message);
+    document.getElementById('analysisBody').innerHTML =
+      '<span style="color:var(--text3);font-size:12px;">⚠ ' + err.message + '</span>';
   }
 }
 
-function renderAnalysis(data) {
+// ── Render all dynamic sections ──
+function renderFullDashboard(data) {
   const date = new Date().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'});
-  
-  // Update date label
+
+  // 1. Analysis sidebar
   const dateEl = document.getElementById('analysisDate');
   if(dateEl) dateEl.textContent = 'Análisis · ' + date;
-  
-  // Render summary
+
   const bodyEl = document.getElementById('analysisBody');
-  if(bodyEl) bodyEl.innerHTML = data.resumen.replace(/\n/g, '<br>');
-  
-  // Render recommendations
+  if(bodyEl && data.resumen) bodyEl.innerHTML = data.resumen.replace(/\n/g, '<br>');
+
   const recEl = document.getElementById('recPills');
   if(recEl && data.recomendaciones) {
-    const actionClass = {
-      'COMPRAR':    'action-hold',
-      'MANTENER':   'action-hold',
-      'VIGILAR':    'action-watch',
-      'PRECAUCIÓN': 'action-caution',
-      'VENDER':     'action-caution'
-    };
-    recEl.innerHTML = data.recomendaciones.map(r => `
-      <div class="rec-pill">
+    const cls = { 'COMPRAR':'action-hold','MANTENER':'action-hold','VIGILAR':'action-watch','PRECAUCIÓN':'action-caution','VENDER':'action-caution' };
+    recEl.innerHTML = data.recomendaciones.map(r =>
+      `<div class="rec-pill">
         <span class="pill-asset">${r.activo}</span>
-        <span class="pill-action ${actionClass[r.accion] || 'action-watch'}">${r.accion}</span>
+        <span class="pill-action ${cls[r.accion]||'action-watch'}">${r.accion}</span>
         <span class="pill-note">${r.nota}</span>
       </div>`).join('');
   }
-  
-  // Render risks
+
   const riskEl = document.getElementById('risksBody');
   if(riskEl && data.riesgos) {
-    riskEl.innerHTML = data.riesgos
-      .split('\n\n')
-      .map(r => `<p style="margin-bottom:10px;">${r}</p>`)
-      .join('');
+    riskEl.innerHTML = data.riesgos.split('\n\n').map(r => `<p style="margin-bottom:10px;">${r}</p>`).join('');
+  }
+
+  // 2. Scenarios
+  const scenGrid = document.getElementById('scenariosGrid');
+  if(scenGrid && data.escenarios) {
+    const typeClass = { 'ALCISTA':'sc-bull', 'BASE':'sc-base', 'BAJISTA':'sc-bear' };
+    const typeIcon  = { 'ALCISTA':'▲', 'BASE':'→', 'BAJISTA':'▼' };
+    scenGrid.innerHTML = data.escenarios.map(sc => `
+      <div class="scenario-card">
+        <div class="scenario-card-header">
+          <span class="sc-asset">${sc.simbolo} ${sc.activo}</span>
+          <span class="sc-price">${sc.precio_actual}</span>
+        </div>
+        <div class="sc-table-head">
+          <span class="sc-th">Escenario</span>
+          <span class="sc-th">Gatillo</span>
+          <span class="sc-th">Prob.</span>
+          <span class="sc-th">Objetivo</span>
+        </div>
+        ${sc.rows.map(r => `
+        <div class="sc-row">
+          <span class="sc-type ${typeClass[r.tipo]||'sc-base'}">${typeIcon[r.tipo]||'→'} ${r.tipo}</span>
+          <span class="sc-trigger">${r.gatillo}</span>
+          <span class="sc-prob ${typeClass[r.tipo]||'sc-base'}">${r.prob}</span>
+          <span class="sc-target">${r.objetivo}</span>
+        </div>`).join('')}
+      </div>`).join('');
+    const sdEl = document.getElementById('scenariosDate');
+    if(sdEl) sdEl.textContent = date;
+  }
+
+  // 3. Stop Loss
+  const slCards = document.getElementById('slCards');
+  if(slCards && data.stopLoss) {
+    const colorMap = { 'green': { fill:'fill-safe', dot:'var(--green)', label:'var(--green)' }, 'gold': { fill:'fill-warn', dot:'var(--gold)', label:'var(--gold2)' }, 'red': { fill:'fill-danger', dot:'var(--red)', label:'var(--red)' } };
+    slCards.innerHTML = data.stopLoss.map(sl => {
+      const c = colorMap[sl.color] || colorMap['green'];
+      // Calculate fill width from distance
+      const slNum = parseFloat(sl.sl.replace(/[$,K]/g,'')) * (sl.sl.includes('K') ? 1000 : 1);
+      const curNum = parseFloat(sl.precio_actual.replace(/[$,K]/g,'')) * (sl.precio_actual.includes('K') ? 1000 : 1);
+      const dist = curNum > slNum ? Math.min(97, Math.round((curNum - slNum) / curNum * 100 + 50)) : 20;
+      const distPct = curNum > slNum ? ((curNum - slNum) / curNum * 100).toFixed(1) : '0';
+      return `
+      <div class="sl-card">
+        <div class="sl-asset-name">${sl.activo}</div>
+        <div class="sl-pair">${sl.par}</div>
+        <div class="sl-numbers">
+          <div><div class="sl-num-label">Precio Actual</div><div class="sl-num-val current">${sl.precio_actual}</div></div>
+          <div style="text-align:right"><div class="sl-num-label">Stop Loss</div><div class="sl-num-val stop">${sl.sl}</div></div>
+        </div>
+        <div class="sl-progress-track"><div class="sl-progress-fill ${c.fill}" style="width:${dist}%"></div></div>
+        <div class="sl-distance-info"><span>SL ${sl.sl}</span><span style="color:${c.label}">−${distPct}% distancia</span></div>
+        <div class="sl-status-badge">
+          <span style="color:${c.dot}">●</span>
+          <span style="color:${c.label};font-weight:500">${sl.estado}</span>
+          <span style="color:var(--text3);margin-left:4px">· ${sl.nota}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // 4. Quotes / Declarations
+  const quotesGrid = document.getElementById('quotesGrid');
+  if(quotesGrid && data.declaraciones) {
+    const qdEl = document.getElementById('quotesDate');
+    if(qdEl) qdEl.textContent = 'Actualizado ' + date;
+    quotesGrid.innerHTML = data.declaraciones.map(q => `
+      <a class="quote-card quote-card-link" href="${q.url !== '#' ? q.url : '#'}" ${q.url !== '#' ? 'target="_blank" rel="noopener"' : ''} style="text-decoration:none;color:inherit;">
+        <div class="quote-who">
+          <div class="quote-avatar">${q.emoji}</div>
+          <div>
+            <div class="quote-name">${q.nombre}</div>
+            <div class="quote-role">${q.rol.toUpperCase()}</div>
+          </div>
+          ${q.url !== '#' ? `<span class="quote-source-tag">${q.fuente} ↗</span>` : `<span class="quote-source-tag">${q.fuente}</span>`}
+        </div>
+        <div class="quote-text">${q.cita}</div>
+        <div class="quote-impact"><strong>Impacto:</strong> ${q.impacto}</div>
+      </a>`).join('');
   }
 }
+
+// Backward compat alias
+const generateAnalysis = generateFullDashboard;
 
 </script>
 </body>
