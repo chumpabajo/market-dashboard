@@ -1187,11 +1187,14 @@ function closeModal(e) {
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeStressModal(); });
 
 // ══════════════════════════════════════════════════════════
-// REAL-TIME PRICE ENGINE
-// BTC/ETH  → Binance WebSocket (updates every second)
-// XAU/XAG  → metals-api.com proxy every 5s
-// USD/CLP  → exchangerate-api every 30s
-// Indices  → Yahoo Finance proxy every 15s (HYG,VIX,SPX,NDX,US10Y)
+// REAL-TIME PRICE ENGINE — fuentes CORS-safe desde github.io
+// BTC/ETH   → Binance WebSocket (push, ~1s)
+// XAU       → Coinbase v2 PAXG-USD spot (CORS abierto, sin key) cada 30s
+// XAG       → CoinGecko simple/price kinesis-silver (CORS abierto, sin key) cada 30s
+// USD/CLP   → open.er-api.com v6 (CORS abierto, sin key) cada 30s
+// US 10Y    → US Treasury Fiscal Data API (pública, sin key) cada 15s
+// SPX/NDX/VIX/HYG → vía Claude web_search dentro del análisis diario
+//                   (no hay API pública sin key con CORS abierto para estos)
 // ══════════════════════════════════════════════════════════
 
 // ── State ──
@@ -1311,93 +1314,155 @@ function connectBinance() {
 }
 
 // ── 2. Metals — Oro y Plata cada 30s ──
+// ESTRATEGIA: NO existe una API gratuita, sin key, con CORS abierto desde github.io
+// que entregue spot oficial XAU/USD y XAG/USD en tiempo real. Las APIs como
+// metals.live, GoldAPI, MetalpriceAPI o Stooq exigen key o bloquean CORS.
+// SOLUCIÓN PRAGMÁTICA: usar tokens crypto respaldados 1:1 por metal físico:
+//   - Oro (XAU)  → Coinbase API v2 PAXG-USD (PAX Gold = 1 oz oro físico).
+//                  CORS oficialmente abierto, sin key, alta liquidez ($120M/día).
+//   - Plata (XAG) → CoinGecko 'kinesis-silver' (KAG = 1 oz plata física).
+//                   CORS oficialmente abierto, sin key. Volumen bajo => menor
+//                   precisión vs spot oficial pero suficiente para dashboard.
+// Ambas APIs son estables, públicas, oficialmente CORS-enabled, sin proxies.
 async function fetchMetals() {
-  // metals.live — free, no key, works via allorigins proxy from GitHub Pages
-  const PROXY = 'https://api.allorigins.win/get?url=';
-
-  // Strategy 1: direct (works if server has CORS headers)
+  // ─── Gold (XAU) via Coinbase PAXG/USD spot ───
+  // Coinbase docs: api v2 supports CORS for unauthenticated endpoints
+  // https://docs.cdp.coinbase.com/coinbase-business/api-architecture/cors
   try {
-    const r = await fetch('https://api.metals.live/v1/spot/gold,silver');
+    const [spotRes, dayRes] = await Promise.all([
+      fetch('https://api.coinbase.com/v2/prices/PAXG-USD/spot'),
+      fetch('https://api.coinbase.com/v2/prices/PAXG-USD/spot?date=' + dateYesterday())
+    ]);
+    if(spotRes.ok) {
+      const spot = await spotRes.json();
+      const xau = parseFloat(spot?.data?.amount);
+      let chg = null;
+      if(dayRes.ok) {
+        const day = await dayRes.json();
+        const prev = parseFloat(day?.data?.amount);
+        if(prev && xau) chg = ((xau - prev) / prev) * 100;
+      }
+      if(xau && xau > 100) applyPrice('xau', xau, chg);
+    }
+  } catch(e) { console.warn('fetchMetals[gold] failed:', e.message); }
+
+  // ─── Silver (XAG) via CoinGecko kinesis-silver (1 KAG = 1 oz silver) ───
+  // CoinGecko Public API has CORS enabled (confirmed in their docs / public usage).
+  // No API key required for the /simple/price endpoint at low rate.
+  try {
+    const r = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price' +
+      '?ids=kinesis-silver&vs_currencies=usd&include_24hr_change=true'
+    );
     if(r.ok) {
       const d = await r.json();
-      // Response is array: [{gold: price}, {silver: price}] or [{price, metal}]
-      let xau = null, xag = null;
-      for(const item of d) {
-        if(item.gold  !== undefined) xau = parseFloat(item.gold);
-        if(item.silver!== undefined) xag = parseFloat(item.silver);
-        if(item.metal === 'gold')   xau = parseFloat(item.price);
-        if(item.metal === 'silver') xag = parseFloat(item.price);
-      }
-      if(xau && xau > 100) { applyPrice('xau', xau, null); }
-      if(xag && xag > 1)   { applyPrice('xag', xag, null); }
-      if(xau || xag) return;
+      const xag = d?.['kinesis-silver']?.usd;
+      const chg = d?.['kinesis-silver']?.usd_24h_change;
+      if(xag && xag > 1) applyPrice('xag', xag, chg);
     }
-  } catch(e) {}
+  } catch(e) { console.warn('fetchMetals[silver] failed:', e.message); }
+}
 
-  // Strategy 2: via allorigins proxy (always works from GitHub Pages)
-  try {
-    const url = encodeURIComponent('https://api.metals.live/v1/spot/gold,silver');
-    const r = await fetch(PROXY + url);
-    if(r.ok) {
-      const wrapper = await r.json();
-      const d = JSON.parse(wrapper.contents);
-      let xau = null, xag = null;
-      for(const item of d) {
-        if(item.gold   !== undefined) xau = parseFloat(item.gold);
-        if(item.silver !== undefined) xag = parseFloat(item.silver);
-        if(item.metal === 'gold')    xau = parseFloat(item.price);
-        if(item.metal === 'silver')  xag = parseFloat(item.price);
-      }
-      if(xau && xau > 100) applyPrice('xau', xau, null);
-      if(xag && xag > 1)   applyPrice('xag', xag, null);
-    }
-  } catch(e) { console.warn('fetchMetals fallback failed:', e.message); }
+// Helper: yesterday's date in YYYY-MM-DD (for Coinbase historic spot price)
+function dateYesterday() {
+  const d = new Date(Date.now() - 24*60*60*1000);
+  return d.toISOString().slice(0,10);
 }
 
 // ── 3. USD/CLP cada 30s ──
+// open.er-api.com/v6 — fork público y mantenido de exchangerate-api,
+// sin key, CORS abierto (`Access-Control-Allow-Origin: *`).
 async function fetchCLP() {
   try {
-    const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
     if(r.ok) {
       const d = await r.json();
-      if(d.rates?.CLP) applyPrice('clp', d.rates.CLP, null);
+      if(d?.rates?.CLP) applyPrice('clp', d.rates.CLP, null);
     }
-  } catch(e) {}
+  } catch(e) {
+    // Fallback al endpoint v4 (legacy, puede que aún funcione)
+    try {
+      const r2 = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+      if(r2.ok) {
+        const d2 = await r2.json();
+        if(d2?.rates?.CLP) applyPrice('clp', d2.rates.CLP, null);
+      }
+    } catch(e2) { console.warn('fetchCLP failed:', e2.message); }
+  }
 }
 
-// ── 4. Indices via Yahoo Finance + allorigins proxy (works from GitHub Pages) ──
+// ── 4. Indices — US 10Y vía US Treasury (gov API, intento directo). ──
+// REALIDAD TÉCNICA — IMPORTANTE:
+// No existe ninguna API pública, gratuita, sin API key, con CORS abierto a
+// github.io que entregue cotizaciones en tiempo real de SPX, NDX, VIX y HYG.
+//   • Yahoo Finance, Stooq y FMP bloquean CORS desde browsers cross-origin.
+//   • Finnhub, AlphaVantage, Twelve Data, MetalPriceAPI etc. exigen key.
+//   • Los proxies públicos (allorigins, corsproxy.io) son frágiles en
+//     producción y el usuario los descartó explícitamente.
+// SOLUCIÓN HÍBRIDA:
+//   1. US 10Y Yield → US Treasury Fiscal Data API (api.fiscaldata.treasury.gov).
+//      Es pública, sin key. Si CORS funciona desde github.io la obtenemos directo;
+//      si no funciona, el catch lo deja vacío sin romper nada.
+//   2. SPX, NDX, VIX, HYG → se obtienen vía Claude `web_search` dentro del
+//      análisis. El prompt incluye explícitamente "incluye los precios actuales
+//      de SPX, NDX, VIX y HYG en el JSON" — Claude los busca con web_search.
+//      Esto es robusto, ya está pagado y siempre funciona desde github.io.
 async function fetchIndices() {
-  const PROXY = 'https://api.allorigins.win/get?url=';
-
-  // Yahoo Finance query — symbols: HYG, ^VIX, ^GSPC (SPX), ^IXIC (NASDAQ), ^TNX (10Y yield)
-  const yahooMap = [
-    { sym: '^TNX',  key: 'us10y', stressIdx: 2, fmt: (p) => (p).toFixed(2)+'%' },
-    { sym: 'HYG',   key: 'hyg',   stressIdx: 0, fmt: (p) => '$'+p.toFixed(2) },
-    { sym: '^VIX',  key: 'vix',   stressIdx: null, fmt: null },
-    { sym: '^GSPC', key: 'spx',   stressIdx: 3, fmt: (p) => p.toLocaleString('es-CL',{maximumFractionDigits:0}) },
-    { sym: '^IXIC', key: 'ndx',   stressIdx: 4, fmt: (p) => p.toLocaleString('es-CL',{maximumFractionDigits:0}) },
-  ];
-
-  const stressVals = document.querySelectorAll('.stress-value');
-
-  for(const item of yahooMap) {
-    try {
-      const yUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(item.sym)}?interval=1d&range=1d`;
-      const r = await fetch(PROXY + encodeURIComponent(yUrl));
-      if(!r.ok) continue;
-      const wrapper = await r.json();
-      const data = JSON.parse(wrapper.contents);
-      const meta = data?.chart?.result?.[0]?.meta;
-      if(!meta) continue;
-      const price = meta.regularMarketPrice;
-      if(!price || isNaN(price)) continue;
-
-      priceState[item.key] = price;
-
-      if(item.stressIdx !== null && stressVals[item.stressIdx]) {
-        stressVals[item.stressIdx].textContent = item.fmt(price);
+  // — US 10Y Yield via US Treasury Fiscal Data (oficial, sin key) —
+  try {
+    const url = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service' +
+                '/v2/accounting/od/daily_treasury_yield_curve_rates' +
+                '?sort=-record_date&page[size]=1&format=json';
+    const r = await fetch(url);
+    if(r.ok) {
+      const json = await r.json();
+      const row = json?.data?.[0];
+      // Treasury devuelve la curva con campo bc_10year (Bond Curve 10Y), en % directo
+      const tnx = row?.bc_10year;
+      if(tnx) {
+        const tnxNum = parseFloat(tnx);
+        if(!isNaN(tnxNum) && tnxNum > 0) {
+          // Almacenamos *10 para mantener la convención previa (^TNX en Yahoo == yield*10)
+          priceState.us10y = tnxNum * 10;
+          const stressVals = document.querySelectorAll('.stress-value');
+          // stress index 2 corresponde a US10Y en el HTML original
+          if(stressVals[2]) stressVals[2].textContent = tnxNum.toFixed(2) + '%';
+        }
       }
-    } catch(e) { continue; }
+    }
+  } catch(e) {
+    // CORS fallido — el dato se obtendrá luego vía web_search en el análisis
+    console.warn('fetchIndices[US10Y direct] failed (probable CORS):', e.message);
+  }
+
+  // SPX/NDX/VIX/HYG: ver renderIndicesFromAnalysis() — los rellena Claude.
+  // No intentamos llamadas que sabemos van a fallar por CORS — sería ruido en consola.
+}
+
+// Llamado desde renderFullDashboard() cuando Claude devuelve indicadores
+// (los pidió a web_search). Mantiene el DOM consistente con fetchIndices().
+function renderIndicesFromAnalysis(data) {
+  if(!data || !data.indicadores) return;
+  const ind = data.indicadores;
+  const stressVals = document.querySelectorAll('.stress-value');
+  const setIfEmpty = (idx, val) => {
+    if(stressVals[idx] && val != null && (
+      stressVals[idx].textContent === '—' ||
+      stressVals[idx].textContent.trim() === '' ||
+      /skeleton/i.test(stressVals[idx].className)
+    )) {
+      stressVals[idx].textContent = val;
+    }
+  };
+  // Índices según el orden en el HTML: [0]=HYG [1]=VIX [2]=US10Y [3]=SPX [4]=NDX
+  if(ind.hyg   != null) { priceState.hyg = parseFloat(String(ind.hyg).replace(/[$,]/g,'')); setIfEmpty(0, '$' + Number(priceState.hyg).toFixed(2)); }
+  if(ind.vix   != null) { priceState.vix = parseFloat(String(ind.vix).replace(/[,]/g,''));  setIfEmpty(1, Number(priceState.vix).toFixed(1)); }
+  if(ind.spx   != null) { priceState.spx = parseFloat(String(ind.spx).replace(/[,]/g,''));  setIfEmpty(3, Number(priceState.spx).toLocaleString('es-CL',{maximumFractionDigits:0})); }
+  if(ind.ndx   != null) { priceState.ndx = parseFloat(String(ind.ndx).replace(/[,]/g,''));  setIfEmpty(4, Number(priceState.ndx).toLocaleString('es-CL',{maximumFractionDigits:0})); }
+  // us10y solo lo sobreescribimos desde Claude si no lo obtuvimos antes del Treasury
+  if(!priceState.us10y && ind.us10y != null) {
+    const v = parseFloat(String(ind.us10y).replace(/%/g,''));
+    if(!isNaN(v)) { priceState.us10y = v * 10; setIfEmpty(2, v.toFixed(2) + '%'); }
   }
 }
 
@@ -1521,12 +1586,20 @@ CARTERA DEL USUARIO: BTC, ETH, Oro, Plata, y Fondo Mutuo Ahorro UF Banco Itaú C
 STOP LOSS DEFINIDOS: BTC $30,000 | ETH $1,280 | Oro $2,500 | Plata $30
 
 INSTRUCCIONES:
-1. Usa web_search para buscar noticias financieras relevantes de HOY sobre: Fed/Warsh, Trump economía, conflictos geopolíticos, cripto, metales, Chile economía
-2. Busca declaraciones recientes de figuras clave: Jerome Powell, Kevin Warsh, Trump, líderes cripto
-3. Genera análisis basado en precios reales + noticias encontradas
+1. Usa web_search para buscar los **precios de cierre más recientes** de S&P 500 (^GSPC), Nasdaq Composite (^IXIC), VIX (^VIX) y el ETF HYG. Inclúyelos en el campo "indicadores" del JSON.
+2. Usa web_search para noticias financieras relevantes de HOY sobre: Fed/Warsh, Trump economía, conflictos geopolíticos, cripto, metales, Chile economía.
+3. Busca declaraciones recientes de figuras clave: Jerome Powell, Kevin Warsh, Trump, líderes cripto.
+4. Genera análisis basado en precios reales + noticias encontradas.
 
 Responde SOLO con JSON válido (sin markdown, sin texto extra):
 {
+  "indicadores": {
+    "spx": "valor numérico del S&P 500 al cierre más reciente (ej: 5827.04)",
+    "ndx": "valor numérico del Nasdaq Composite ^IXIC al cierre más reciente",
+    "vix": "valor numérico del VIX al cierre más reciente",
+    "hyg": "valor numérico del precio del ETF HYG al cierre",
+    "us10y": "yield del Treasury 10Y en % (ej: 4.32)"
+  },
   "resumen": "2-3 oraciones del estado del mercado hoy con precios reales",
   "recomendaciones": [
     {"activo": "BTC", "accion": "MANTENER", "nota": "razón basada en precio actual"},
@@ -1606,91 +1679,115 @@ Responde SOLO con JSON válido (sin markdown, sin texto extra):
 }`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // ── Claude API agentic loop para server-side web_search ──
+    //
+    // CONCEPTO CLAVE (de la doc oficial de Anthropic):
+    // `web_search` es un SERVER TOOL: corre dentro de la infraestructura de
+    // Anthropic. El servidor itera internamente (busca, lee, vuelve a buscar)
+    // y nos devuelve el resultado YA RESUELTO. La respuesta contiene bloques
+    // de tipo `server_tool_use` y `web_search_tool_result` que NO requieren
+    // que nosotros devolvamos ningún `tool_result` desde el cliente.
+    //
+    // El código original trataba web_search como un CLIENT TOOL, devolviendo
+    // bloques `{type:'tool_result', tool_use_id, content}` — eso es para tools
+    // del cliente como bash/text_editor. Para server tools no se hace, y por
+    // eso Claude nunca llegaba al `end_turn` con el JSON final.
+    //
+    // FLUJO CORRECTO:
+    //   1) Llamamos a /v1/messages con el prompt + web_search habilitado.
+    //   2) Si stop_reason === 'end_turn'  → ya tenemos el texto final, salir.
+    //   3) Si stop_reason === 'pause_turn' → el loop interno del servidor
+    //      llegó a su límite. Reenviamos exactamente la misma conversación
+    //      con `{role:'assistant', content: response.content}` para que
+    //      Claude continúe. NO inventamos tool_result.
+    //   4) Si stop_reason === 'max_tokens' → la salida quedó truncada;
+    //      reintentamos con más max_tokens o fallamos limpiamente.
+    //
+    // Doc: https://platform.claude.com/docs/en/agents-and-tools/tool-use/server-tools
+    //      https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool
+
+    const apiUrl = 'https://api.anthropic.com/v1/messages';
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': CLAUDE_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    };
+    const baseBody = {
+      model: 'claude-sonnet-4-6',
+      max_tokens: 8000, // suficiente para el JSON completo + bloques de citas
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 8 }],
+    };
+
+    // Primera llamada
+    let messages = [{ role: 'user', content: prompt }];
+    let response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{ role: 'user', content: prompt }]
-      })
+      headers,
+      body: JSON.stringify({ ...baseBody, messages })
     });
+    if(!response.ok) {
+      const errTxt = await response.text().catch(() => '');
+      throw new Error('API ' + response.status + (errTxt ? ' — ' + errTxt.slice(0,200) : ''));
+    }
+    let data = await response.json();
 
-    if(!response.ok) throw new Error('API ' + response.status);
-    const data = await response.json();
-
-    // Handle agentic responses: when web_search tool is used, the API returns
-    // stop_reason='tool_use'. We need to continue the conversation until
-    // stop_reason='end_turn' to get the final JSON text response.
-    let finalContent = data.content;
-    let fullMessages = [{ role: 'user', content: prompt }];
-
-    // Agentic loop — follow tool calls until end_turn (max 5 rounds)
-    let rounds = 0;
-    let currentData = data;
-    while(currentData.stop_reason === 'tool_use' && rounds < 5) {
-      rounds++;
-      // Add assistant response to history
-      fullMessages.push({ role: 'assistant', content: currentData.content });
-
-      // Build tool results for all tool_use blocks
-      const toolResults = currentData.content
-        .filter(b => b.type === 'tool_use')
-        .map(b => ({
-          type: 'tool_result',
-          tool_use_id: b.id,
-          content: b.input ? JSON.stringify(b.input) : 'search completed'
-        }));
-
-      fullMessages.push({ role: 'user', content: toolResults });
-
-      const cont = await fetch('https://api.anthropic.com/v1/messages', {
+    // Loop de continuación SOLO para pause_turn (límite de iteraciones del
+    // server-side sampling loop). Máx. 4 continuaciones por seguridad.
+    let continuations = 0;
+    while(data.stop_reason === 'pause_turn' && continuations < 4) {
+      continuations++;
+      // Reemplazamos la lista — siempre la conversación es:
+      // [user: prompt original, assistant: contenido pausado completo]
+      messages = [
+        { role: 'user',      content: prompt },
+        { role: 'assistant', content: data.content }
+      ];
+      const cont = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': CLAUDE_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 4000,
-          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-          messages: fullMessages
-        })
+        headers,
+        body: JSON.stringify({ ...baseBody, messages })
       });
-      if(!cont.ok) break;
-      currentData = await cont.json();
-      finalContent = currentData.content;
+      if(!cont.ok) {
+        const errTxt = await cont.text().catch(() => '');
+        throw new Error('API ' + cont.status + ' en continuación (' + errTxt.slice(0,200) + ')');
+      }
+      data = await cont.json();
     }
 
-    // Extract all text blocks from final response
+    if(data.stop_reason === 'max_tokens') {
+      console.warn('Claude alcanzó max_tokens; intentando parsear lo recibido.');
+    }
+    if(data.stop_reason && !['end_turn','max_tokens','pause_turn'].includes(data.stop_reason)) {
+      // 'refusal' u otros — registramos pero seguimos intentando parsear texto
+      console.warn('stop_reason inesperado:', data.stop_reason);
+    }
+
+    // ── Extracción de texto ──
+    // El array `content` puede tener varios bloques `text` (Claude habla, luego
+    // hace search, luego habla más). Concatenamos todos los bloques text.
+    // Ignoramos `server_tool_use`, `web_search_tool_result`, etc.
     let text = '';
-    for(const block of finalContent) {
-      if(block.type === 'text') text += block.text;
+    for(const block of data.content || []) {
+      if(block.type === 'text' && typeof block.text === 'string') text += block.text;
     }
+    if(!text.trim()) throw new Error('Respuesta sin contenido de texto');
 
-    // Robust JSON extraction — handles extra text and markdown fences
+    // ── Parseo robusto del JSON ──
     let analysis = null;
     const clean = text.replace(/```json|```/gi, '').trim();
-
     const strategies = [
       () => JSON.parse(clean),
       () => { const s=clean.indexOf('{'); const e=clean.lastIndexOf('}')+1; return JSON.parse(clean.slice(s,e)); },
       () => { const m=clean.match(/\{[\s\S]*\}/); if(!m) throw new Error('No JSON'); return JSON.parse(m[0]); }
     ];
-
     for(const strategy of strategies) {
       try { analysis = strategy(); break; } catch(e) { continue; }
     }
-
-    if(!analysis) throw new Error('Could not parse Claude response as JSON');
+    if(!analysis) {
+      console.error('Texto crudo recibido:', text.slice(0, 500));
+      throw new Error('Could not parse Claude response as JSON');
+    }
 
     localStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(analysis));
     localStorage.setItem(ANALYSIS_DATE_KEY, today);
@@ -1707,6 +1804,10 @@ Responde SOLO con JSON válido (sin markdown, sin texto extra):
 // ── Render all dynamic sections ──
 function renderFullDashboard(data) {
   const date = new Date().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'});
+
+  // 0. Indicadores SPX/NDX/VIX/HYG/US10Y obtenidos por Claude vía web_search
+  //    (cubren los datos que no podemos pedir directo desde el browser por CORS).
+  renderIndicesFromAnalysis(data);
 
   // 1. Analysis sidebar
   const dateEl = document.getElementById('analysisDate');
