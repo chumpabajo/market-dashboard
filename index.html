@@ -837,7 +837,7 @@ header{border-bottom:1px solid var(--border);background:linear-gradient(180deg,r
 <footer class="page-footer">
   <div class="footer-inner">
     <div class="footer-sources">
-      <strong>Fuentes:</strong> CoinGecko (BTC/ETH) · metals.live (XAU/XAG) · TradingView (Gráficos)<br>
+      <strong>Fuentes:</strong> Binance WebSocket (BTC/ETH) · Coinbase API (XAU/XAG) · Stooq (Índices) · TradingView (Gráficos)<br>
       Investing.com · TradingEconomics · CNBC · CBS News · US News · Chase · Morgan Stanley
     </div>
     <div class="footer-disc">
@@ -1310,33 +1310,32 @@ function connectBinance() {
   };
 }
 
-// ── 2. Metals — Oro y Plata cada 5s ──
+// ── 2. Metals — Oro y Plata cada 30s ──
 async function fetchMetals() {
-  // Primary: metals.live (free, no CORS issues from GitHub Pages)
+  // Primary: Coinbase rates API (free, CORS-open, reliable)
+  // XAU and XAG are available as exchange rates vs USD
   try {
-    const r = await fetch('https://api.metals.live/v1/spot/gold,silver');
-    if(r.ok) {
-      const d = await r.json();
-      const xau = d[0]?.price || d.find(x=>x.gold)?.gold;
-      const xag = d[1]?.price || d.find(x=>x.silver)?.silver;
-      if(xau) applyPrice('xau', xau, null);
-      if(xag) applyPrice('xag', xag, null);
+    const [rGold, rSilver] = await Promise.all([
+      fetch('https://api.coinbase.com/v2/exchange-rates?currency=XAU'),
+      fetch('https://api.coinbase.com/v2/exchange-rates?currency=XAG')
+    ]);
+    if(rGold.ok && rSilver.ok) {
+      const dGold   = await rGold.json();
+      const dSilver = await rSilver.json();
+      const xau = parseFloat(dGold?.data?.rates?.USD);
+      const xag = parseFloat(dSilver?.data?.rates?.USD);
+      if(xau && xau > 100) { applyPrice('xau', xau, null); }
+      if(xag && xag > 1)   { applyPrice('xag', xag, null); }
       return;
     }
-  } catch(e) {}
+  } catch(e) { console.warn('Coinbase metals failed:', e.message); }
 
-  // Fallback: via allorigins CORS proxy
+  // Fallback: Frankfurter.app (free ECB data, CORS-open) — less frequent updates
   try {
-    const proxy = 'https://api.allorigins.win/get?url=';
-    const target = encodeURIComponent('https://api.metals.live/v1/spot/gold,silver');
-    const r = await fetch(proxy + target);
+    const r = await fetch('https://api.frankfurter.app/latest?from=XAU&to=USD,EUR');
     if(r.ok) {
-      const wrapper = await r.json();
-      const d = JSON.parse(wrapper.contents);
-      const xau = d[0]?.price;
-      const xag = d[1]?.price;
-      if(xau) applyPrice('xau', xau, null);
-      if(xag) applyPrice('xag', xag, null);
+      const d = await r.json();
+      if(d?.rates?.USD) applyPrice('xau', d.rates.USD, null);
     }
   } catch(e) {}
 }
@@ -1352,54 +1351,63 @@ async function fetchCLP() {
   } catch(e) {}
 }
 
-// ── 4. Yahoo Finance indices cada 15s (HYG, VIX, SPX, NDX, US10Y) ──
+// ── 4. Indices via reliable CORS-open APIs ──
 async function fetchIndices() {
-  const symbols = ['HYG','%5EVIX','%5EGSPC','%5EIXIC','%5ETNX']; // TNX = US10Y *10
-  const keys    = ['hyg','vix','spx','ndx','us10y'];
+  // Use stooq.com — free, no CORS, no key required
+  // Returns CSV: Date,Open,High,Low,Close,Volume
+  const stooqMap = [
+    { sym: 'hyg.us',  key: 'hyg',   format: (p) => '$'+p.toFixed(2),                           stressIdx: 0 },
+    { sym: 'spy.us',  key: 'spx',   format: (p) => p.toLocaleString('es-CL',{maximumFractionDigits:0}), stressIdx: 3 },
+    { sym: 'qqq.us',  key: 'ndx',   format: (p) => p.toLocaleString('es-CL',{maximumFractionDigits:0}), stressIdx: 4 },
+  ];
 
-  for(let i = 0; i < symbols.length; i++) {
+  for(const item of stooqMap) {
     try {
-      const proxy = 'https://api.allorigins.win/get?url=';
-      const target = encodeURIComponent(
-        `https://query1.finance.yahoo.com/v8/finance/chart/${symbols[i]}?interval=1m&range=1d`
-      );
-      const r = await fetch(proxy + target);
+      const r = await fetch(`https://stooq.com/q/l/?s=${item.sym}&f=sd2t2ohlcv&h&e=csv`);
       if(!r.ok) continue;
-      const wrapper = await r.json();
-      const data = JSON.parse(wrapper.contents);
-      const meta = data?.chart?.result?.[0]?.meta;
-      if(!meta) continue;
-      const price = meta.regularMarketPrice;
-      const prevClose = meta.chartPreviousClose || meta.previousClose;
-      const chg = prevClose ? ((price - prevClose) / prevClose * 100) : null;
-
-      // Update stress indicator values in the cards
-      const key = keys[i];
-      priceState[key] = price;
-
-      // Find and update the stress card value
+      const text = await r.text();
+      const lines = text.trim().split('\n');
+      if(lines.length < 2) continue;
+      const cols = lines[1].split(',');
+      const price = parseFloat(cols[4]); // Close price
+      if(isNaN(price) || price <= 0) continue;
+      priceState[item.key] = price;
       const stressVals = document.querySelectorAll('.stress-value');
-      const stressNames = ['HYG ETF','MOVE Index','US 10Y Yield','S&P 500','NASDAQ 100'];
-      // Map by position in stress grid
-      const stressMap = { 'hyg': 0, 'vix': null, 'us10y': 2, 'spx': 3, 'ndx': 4 };
-      const idx = stressMap[key];
-      if(idx !== null && idx !== undefined && stressVals[idx]) {
-        if(key === 'us10y') {
-          stressVals[idx].textContent = (price/10).toFixed(2)+'%'; // TNX is in tenths
-        } else if(key === 'hyg') {
-          stressVals[idx].textContent = '$'+price.toFixed(2);
-        } else if(key === 'spx') {
-          stressVals[idx].textContent = price.toLocaleString('es-CL',{maximumFractionDigits:0});
-        } else if(key === 'ndx') {
-          stressVals[idx].textContent = price.toLocaleString('es-CL',{maximumFractionDigits:0});
-        }
+      if(stressVals[item.stressIdx]) {
+        stressVals[item.stressIdx].textContent = item.format(price);
       }
-
-      // Update header ticker if present
-      if(key === 'us10y') updateTicker('10Y', price/10, chg);
-
     } catch(e) { continue; }
   }
+
+  // US 10Y yield via FRED JSON API (free, CORS-open)
+  try {
+    const r = await fetch('https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&sort_order=desc&limit=1&file_type=json&api_key=f6ed3b8adb0b5e32a32c58faa51c3a47');
+    if(r.ok) {
+      const d = await r.json();
+      const val = parseFloat(d?.observations?.[0]?.value);
+      if(!isNaN(val)) {
+        priceState['us10y'] = val * 10; // store as *10 for consistency
+        const stressVals = document.querySelectorAll('.stress-value');
+        if(stressVals[2]) stressVals[2].textContent = val.toFixed(2)+'%';
+      }
+    }
+  } catch(e) {}
+
+  // VIX via stooq
+  try {
+    const r = await fetch('https://stooq.com/q/l/?s=^vix&f=sd2t2ohlcv&h&e=csv');
+    if(r.ok) {
+      const text = await r.text();
+      const lines = text.trim().split('\n');
+      if(lines.length >= 2) {
+        const price = parseFloat(lines[1].split(',')[4]);
+        if(!isNaN(price)) {
+          priceState['vix'] = price;
+          // VIX not shown in stress grid but used by Claude
+        }
+      }
+    }
+  } catch(e) {}
 }
 
 // ── Manual refresh button ──
@@ -1425,7 +1433,7 @@ function startAutoUpdates() {
   fetchMetals();                              // immediate
   fetchCLP();
   fetchIndices();
-  setInterval(fetchMetals,   5000);          // metals every 5s
+  setInterval(fetchMetals,   30000);         // metals every 30s (Coinbase rate limit)
   setInterval(fetchCLP,      30000);         // CLP every 30s
   setInterval(fetchIndices,  15000);         // indices every 15s
   setInterval(setUpdateTime, 1000);          // clock every 1s
@@ -1632,11 +1640,33 @@ Responde SOLO con JSON válido (sin markdown, sin texto extra):
       if(block.type === 'text') text += block.text;
     }
 
+    // Robust JSON extraction — handles extra text, markdown, and partial tool responses
+    let analysis = null;
     const clean = text.replace(/```json|```/g, '').trim();
-    // Find JSON object in response
-    const jsonStart = clean.indexOf('{');
-    const jsonEnd = clean.lastIndexOf('}') + 1;
-    const analysis = JSON.parse(clean.slice(jsonStart, jsonEnd));
+    
+    // Try multiple extraction strategies
+    const strategies = [
+      // Strategy 1: Direct parse
+      () => JSON.parse(clean),
+      // Strategy 2: Find outermost { }
+      () => {
+        const s = clean.indexOf('{');
+        const e = clean.lastIndexOf('}') + 1;
+        return JSON.parse(clean.slice(s, e));
+      },
+      // Strategy 3: Find JSON after any preamble text
+      () => {
+        const match = clean.match(/\{[\s\S]*\}/);
+        if(!match) throw new Error('No JSON found');
+        return JSON.parse(match[0]);
+      }
+    ];
+    
+    for(const strategy of strategies) {
+      try { analysis = strategy(); break; } catch(e) { continue; }
+    }
+    
+    if(!analysis) throw new Error('Could not parse Claude response as JSON');
 
     localStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(analysis));
     localStorage.setItem(ANALYSIS_DATE_KEY, today);
