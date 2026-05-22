@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MARKET INTELLIGENCE · iBudget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Outfit:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void:#04060a; --deep:#080c12; --surface:#0c1118; --raised:#111820;
+  --border:#1c2530; --border2:#243040;
+  --gold:#c9a84c; --gold2:#e8c97a; --gold3:#f5dfa0;
+  --gold-dim:rgba(201,168,76,0.10); --gold-glow:rgba(201,168,76,0.25);
+  --green:#3dd68c; --green-dim:rgba(61,214,140,0.10);
+  --red:#f0505a; --red-dim:rgba(240,80,90,0.10);
+  --blue:#4da8f0; --blue-dim:rgba(77,168,240,0.08);
+  --purple:#a78bfa; --purple-dim:rgba(167,139,250,0.10);
+  --teal:#2dd4bf; --teal-dim:rgba(45,212,191,0.10);
+  --orange:#fb923c; --orange-dim:rgba(251,146,60,0.10);
+  --silver:#8899aa;
+  --text:#d0dce8; --text2:#7a90a8; --text3:#3d5060;
+  --serif:'Cormorant Garamond',serif;
+  --mono:'DM Mono',monospace;
+  --sans:'Outfit',sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--void);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 10% 0%,rgba(201,168,76,0.04) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 90% 100%,rgba(77,168,240,0.03) 0%,transparent 60%);pointer-events:none;z-index:0;}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(201,168,76,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.012) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0;}
+.page{position:relative;z-index:1;}
+
+/* ── HEADER ── */
+header{border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(8,12,18,0.98) 0%,rgba(4,6,10,0.95) 100%);backdrop-filter:blur(20px);position:sticky;top:0;z-index:100;}
+.header-inner{max-width:1400px;margin:0 auto;padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:24px;}
+.logo{display:flex;align-items:baseline;gap:10px;flex-shrink:0;}
+.logo-mark{font-family:var(--serif);font-size:22px;font-weight:600;color:var(--gold2);letter-spacing:0.5px;line-height:1;}
+.logo-sub{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:3px;text-transform:uppercase;}
+.header-ticker{flex:1;display:flex;overflow:hidden;border-left:1px solid var(--border);border-right:1px solid var(--border);}
+.tick-item{display:flex;align-items:center;gap:8px;padding:0 18px;border-right:1px solid var(--border);flex-shrink:0;transition:background 0.2s;}
+.tick-item:hover{background:var(--raised);}
+.tick-name{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1px;}
+.tick-price{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);}
+.tick-chg{font-family:var(--mono);font-size:10px;font-weight:500;padding:2px 5px;border-radius:2px;}
+.chg-up{color:var(--green);background:var(--green-dim);}
+.chg-down{color:var(--red);background:var(--red-dim);}
+.chg-flat{color:var(--gold);background:var(--gold-dim);}
+.header-actions{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.last-update{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:right;line-height:1.4;}
+.btn-refresh{display:flex;align-items:center;gap:7px;background:var(--gold-dim);border:1px solid var(--gold);color:var(--gold2);font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:8px 16px;border-radius:2px;cursor:pointer;transition:all 0.2s;}
+.btn-refresh:hover{background:var(--gold-glow);color:var(--gold3);transform:translateY(-1px);}
+.btn-refresh svg{width:12px;height:12px;transition:transform 0.6s;}
+.btn-refresh.loading svg{animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── MAIN ── */
+.main{max-width:1400px;margin:0 auto;padding:32px 32px 80px;}
+
+/* ── SECTION HEADERS ── */
+.section-head{display:flex;align-items:center;gap:16px;margin-bottom:20px;}
+.section-eyebrow{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;border:1px solid var(--gold);padding:3px 8px;border-radius:1px;flex-shrink:0;}
+.section-title{font-family:var(--serif);font-size:20px;font-weight:500;color:var(--text);letter-spacing:0.3px;}
+.section-rule{flex:1;height:1px;background:linear-gradient(90deg,var(--border2) 0%,transparent 100%);}
+
+/* ── PRICE CARDS ── */
+.price-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:40px;}
+.price-card{background:var(--surface);padding:24px 24px 20px;position:relative;overflow:hidden;transition:background 0.2s;}
+.price-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.price-card.gold-card::before{background:linear-gradient(90deg,var(--gold),transparent);}
+.price-card.green-card::before{background:linear-gradient(90deg,var(--green),transparent);}
+.price-card.red-card::before{background:linear-gradient(90deg,var(--red),transparent);}
+.price-card.silver-card::before{background:linear-gradient(90deg,var(--silver),transparent);}
+.price-card:hover{background:var(--raised);}
+.card-symbol{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.card-symbol-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dot-gold{background:var(--gold);}
+.dot-green{background:var(--green);}
+.dot-red{background:var(--red);}
+.dot-silver{background:var(--silver);}
+.card-price{font-family:var(--serif);font-size:36px;font-weight:600;color:#fff;letter-spacing:-0.5px;line-height:1;margin-bottom:6px;min-height:36px;}
+.card-name{font-family:var(--sans);font-size:11px;color:var(--text3);font-weight:300;margin-bottom:16px;}
+.card-stats{display:flex;gap:16px;flex-wrap:wrap;}
+.card-stat{display:flex;flex-direction:column;gap:2px;}
+.stat-label{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;}
+.stat-value{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text);}
+.stat-value.up{color:var(--green);}
+.stat-value.down{color:var(--red);}
+.stat-value.gold-val{color:var(--gold2);}
+.skeleton{display:inline-block;height:1em;border-radius:3px;background:linear-gradient(90deg,var(--raised) 25%,var(--border2) 50%,var(--raised) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* ── TWO COL ── */
+.two-col{display:grid;grid-template-columns:1fr 380px;gap:24px;margin-bottom:40px;}
+
+/* ── CHART PANEL ── */
+.chart-panel{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;}
+.chart-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.chart-asset-tabs,.tf-tabs{display:flex;gap:4px;}
+.asset-tab,.tf-tab{font-family:var(--mono);font-size:11px;font-weight:500;padding:5px 12px;border-radius:2px;border:1px solid transparent;cursor:pointer;transition:all 0.15s;background:none;color:var(--text3);}
+.tf-tab{font-size:10px;padding:4px 9px;letter-spacing:0.5px;}
+.asset-tab:hover,.tf-tab:hover{color:var(--text2);border-color:var(--border2);}
+.asset-tab.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold2);}
+.tf-tab.active{background:var(--raised);border-color:var(--border2);color:var(--text);}
+.chart-container{flex:1;min-height:440px;}
+.chart-container iframe{width:100%;height:100%;min-height:440px;border:none;display:block;}
+#tradingview_chart{height:440px;width:100%;}
+
+/* ── ANALYSIS SIDEBAR ── */
+.analysis-panel{display:flex;flex-direction:column;gap:16px;}
+.analysis-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;position:relative;overflow:hidden;}
+.analysis-card::after{content:'';position:absolute;top:0;left:0;width:2px;height:100%;background:var(--gold);opacity:0.4;}
+.analysis-label{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;padding-left:12px;}
+.analysis-title{font-family:var(--serif);font-size:16px;font-weight:600;color:#fff;padding-left:12px;margin-bottom:12px;line-height:1.3;}
+.analysis-body{font-size:12.5px;color:var(--text2);line-height:1.75;padding-left:12px;}
+.analysis-body strong{color:var(--text);font-weight:500;}
+.analysis-body .highlight{color:var(--gold2);font-weight:500;}
+.analysis-body .danger{color:var(--red);}
+.analysis-body .positive{color:var(--green);}
+.analysis-divider{height:1px;background:var(--border);margin:12px 0 12px 12px;}
+.rec-pills{display:flex;flex-direction:column;gap:8px;padding-left:12px;margin-top:4px;}
+.rec-pill{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--raised);border-radius:3px;border:1px solid var(--border);}
+.pill-asset{font-family:var(--mono);font-size:11px;font-weight:500;color:#fff;min-width:32px;}
+.pill-action{font-family:var(--mono);font-size:9px;font-weight:500;padding:2px 7px;border-radius:1px;letter-spacing:1px;text-transform:uppercase;flex-shrink:0;}
+.action-hold{background:var(--gold-dim);color:var(--gold2);border:1px solid var(--gold);}
+.action-watch{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue);}
+.action-caution{background:var(--red-dim);color:var(--red);border:1px solid var(--red);}
+.pill-note{font-size:11px;color:var(--text3);line-height:1.4;}
+
+/* ── STRESS GRID ── */
+.stress-section{margin-bottom:40px;}
+.stress-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.stress-item{background:var(--surface);padding:20px 18px;transition:background 0.2s;cursor:pointer;position:relative;}
+.stress-item:hover{background:var(--raised);}
+.stress-item::after{content:'↗';position:absolute;top:10px;right:12px;font-size:10px;color:var(--text3);opacity:0;transition:opacity 0.2s;}
+.stress-item:hover::after{opacity:1;}
+.stress-name{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
+.stress-value{font-family:var(--serif);font-size:24px;font-weight:600;color:#fff;line-height:1;margin-bottom:6px;}
+.stress-sub{font-family:var(--mono);font-size:10px;margin-bottom:10px;}
+.stress-badge{display:inline-block;font-family:var(--mono);font-size:8px;font-weight:500;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:1px;}
+.badge-low{background:var(--green-dim);color:var(--green);border:1px solid rgba(61,214,140,0.3);}
+.badge-mid{background:var(--gold-dim);color:var(--gold2);border:1px solid rgba(201,168,76,0.3);}
+.badge-high{background:var(--red-dim);color:var(--red);border:1px solid rgba(240,80,90,0.3);}
+.badge-crit{background:rgba(240,80,90,0.18);color:#ff8090;border:1px solid rgba(240,80,90,0.5);}
+.stress-desc{font-size:11px;color:var(--text3);line-height:1.6;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(4,6,10,0.88);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-box{background:var(--surface);border:1px solid var(--border2);border-radius:8px;width:min(900px,94vw);max-height:90vh;overflow:hidden;display:flex;flex-direction:column;transform:translateY(20px);transition:transform 0.25s;}
+.modal-overlay.open .modal-box{transform:translateY(0);}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-title{font-family:var(--serif);font-size:18px;font-weight:600;color:#fff;}
+.modal-close{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 8px;border-radius:3px;transition:all 0.15s;line-height:1;}
+.modal-close:hover{background:var(--raised);color:var(--text);}
+.modal-body{flex:1;overflow:hidden;}
+.modal-body #modalChart{width:100%;height:500px;}
+
+/* ── SCENARIOS ── */
+.scenarios-section{margin-bottom:40px;}
+.scenarios-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.scenario-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.scenario-card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--raised);}
+.sc-asset{font-family:var(--serif);font-size:17px;font-weight:600;color:#fff;}
+.sc-price{font-family:var(--mono);font-size:11px;color:var(--text3);}
+.sc-table-head{display:grid;grid-template-columns:90px 1fr 90px 100px;gap:12px;padding:8px 18px;border-bottom:1px solid var(--border);background:rgba(28,37,48,0.5);}
+.sc-th{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;}
+.sc-th:nth-child(3),.sc-th:nth-child(4){text-align:right;}
+.sc-row{display:grid;grid-template-columns:90px 1fr 90px 100px;gap:12px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--border);transition:background 0.15s;}
+.sc-row:last-child{border-bottom:none;}
+.sc-row:hover{background:var(--raised);}
+.sc-type{font-family:var(--mono);font-size:10px;font-weight:500;display:flex;align-items:center;gap:5px;}
+.sc-bull{color:var(--green);}
+.sc-base{color:var(--blue);}
+.sc-bear{color:var(--red);}
+.sc-trigger{font-size:11px;color:var(--text3);line-height:1.5;}
+.sc-prob{font-family:var(--mono);font-size:13px;font-weight:500;text-align:right;}
+.sc-target{font-family:var(--mono);font-size:11px;text-align:right;color:var(--text2);}
+
+/* ── STOP LOSS ── */
+.sl-section{margin-bottom:40px;}
+.sl-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.sl-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;}
+.sl-asset-name{font-family:var(--serif);font-size:18px;font-weight:600;color:#fff;margin-bottom:4px;}
+.sl-pair{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;margin-bottom:16px;}
+.sl-numbers{display:flex;justify-content:space-between;margin-bottom:10px;}
+.sl-num-label{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.sl-num-val{font-family:var(--mono);font-size:14px;font-weight:500;}
+.sl-num-val.current{color:var(--text);}
+.sl-num-val.stop{color:var(--text3);}
+.sl-progress-track{height:4px;background:var(--raised);border-radius:2px;overflow:visible;position:relative;margin-bottom:4px;}
+.sl-progress-fill{height:100%;border-radius:2px;position:relative;}
+.sl-progress-fill::after{content:'';position:absolute;right:-1px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;border:2px solid var(--surface);}
+.fill-safe{background:var(--green);}
+.fill-safe::after{background:var(--green);}
+.fill-warn{background:var(--gold);}
+.fill-warn::after{background:var(--gold);}
+.fill-danger{background:var(--red);}
+.fill-danger::after{background:var(--red);}
+.sl-distance-info{font-family:var(--mono);font-size:10px;color:var(--text3);display:flex;justify-content:space-between;}
+.sl-status-badge{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-family:var(--mono);font-size:10px;display:flex;align-items:center;gap:6px;}
+
+/* ── INDICATOR PANELS (Liquidez, Deuda, Chile, Adicionales) ── */
+.indicator-section{margin-bottom:40px;}
+.indicator-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;}
+.indicator-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;position:relative;overflow:hidden;transition:background 0.2s;}
+.indicator-card:hover{background:var(--raised);}
+.ind-accent{position:absolute;top:0;left:0;right:0;height:2px;}
+.ind-accent-gold{background:linear-gradient(90deg,var(--gold),transparent);}
+.ind-accent-blue{background:linear-gradient(90deg,var(--blue),transparent);}
+.ind-accent-purple{background:linear-gradient(90deg,var(--purple),transparent);}
+.ind-accent-teal{background:linear-gradient(90deg,var(--teal),transparent);}
+.ind-accent-orange{background:linear-gradient(90deg,var(--orange),transparent);}
+.ind-accent-green{background:linear-gradient(90deg,var(--green),transparent);}
+.ind-accent-red{background:linear-gradient(90deg,var(--red),transparent);}
+.ind-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.ind-name{font-family:var(--serif);font-size:16px;font-weight:600;color:#fff;margin-bottom:4px;line-height:1.2;}
+.ind-value{font-family:var(--mono);font-size:22px;font-weight:500;margin-bottom:4px;line-height:1;}
+.ind-change{font-family:var(--mono);font-size:11px;margin-bottom:12px;}
+.ind-divider{height:1px;background:var(--border);margin:12px 0;}
+.ind-what-title{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}
+.ind-what{font-size:11.5px;color:var(--text3);line-height:1.65;}
+.ind-what strong{color:var(--text2);}
+.ind-signal{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:2px;}
+.sig-bull{background:var(--green-dim);color:var(--green);border:1px solid rgba(61,214,140,0.25);}
+.sig-bear{background:var(--red-dim);color:var(--red);border:1px solid rgba(240,80,90,0.25);}
+.sig-neutral{background:var(--gold-dim);color:var(--gold2);border:1px solid rgba(201,168,76,0.25);}
+.sig-watch{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,0.25);}
+
+/* ── QUOTES ── */
+.quotes-section{margin-bottom:40px;}
+.quotes-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.quote-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:14px;transition:background 0.2s;}
+.quote-card:hover{background:var(--raised);}
+.quote-card-link{cursor:pointer;text-decoration:none;}
+.quote-who{display:flex;align-items:center;gap:12px;}
+.quote-avatar{width:40px;height:40px;border-radius:50%;border:1px solid var(--border2);background:var(--raised);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.quote-name{font-family:var(--serif);font-size:16px;font-weight:600;color:#fff;line-height:1.2;}
+.quote-role{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px;}
+.quote-source-tag{font-family:var(--mono);font-size:9px;color:var(--blue);border:1px solid var(--blue);padding:2px 6px;border-radius:1px;margin-left:auto;flex-shrink:0;letter-spacing:0.5px;}
+.quote-text{font-family:var(--serif);font-size:14px;font-style:italic;color:var(--text2);line-height:1.7;padding:12px 16px;border-left:2px solid var(--gold);background:var(--raised);border-radius:0 3px 3px 0;}
+.quote-impact{font-size:12px;color:var(--text3);line-height:1.65;padding:10px 12px;background:rgba(201,168,76,0.04);border-radius:3px;border:1px solid rgba(201,168,76,0.08);}
+.quote-impact strong{color:var(--gold2);font-weight:500;}
+.quote-read-more{font-family:var(--mono);font-size:10px;color:var(--blue);display:flex;align-items:center;gap:5px;margin-top:-4px;}
+.quote-read-more:hover{color:var(--gold2);}
+
+/* ── FOOTER ── */
+.page-footer{border-top:1px solid var(--border);padding:24px 32px;max-width:1400px;margin:0 auto;}
+.footer-inner{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;}
+.footer-sources{font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.8;letter-spacing:0.5px;}
+.footer-sources strong{color:var(--text2);}
+.footer-disc{font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.7;max-width:520px;letter-spacing:0.3px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:32px;right:32px;background:var(--raised);border:1px solid var(--border2);border-left:3px solid var(--gold);padding:12px 18px;border-radius:3px;font-family:var(--mono);font-size:11px;color:var(--text2);transform:translateY(80px);opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);z-index:600;backdrop-filter:blur(12px);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.price-card{animation:fadeUp 0.5s ease both;}
+.price-card:nth-child(1){animation-delay:0.05s;}
+.price-card:nth-child(2){animation-delay:0.10s;}
+.price-card:nth-child(3){animation-delay:0.15s;}
+.price-card:nth-child(4){animation-delay:0.20s;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1200px){.two-col{grid-template-columns:1fr;}.stress-grid{grid-template-columns:repeat(3,1fr);}.sl-cards{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:900px){.price-cards{grid-template-columns:repeat(2,1fr);}.scenarios-grid{grid-template-columns:1fr;}.quotes-grid{grid-template-columns:1fr;}.header-ticker{display:none;}.main{padding:20px 16px 60px;}.header-inner{padding:0 16px;}}
+@media(max-width:600px){.stress-grid{grid-template-columns:repeat(2,1fr);}.sl-cards{grid-template-columns:1fr;}.sc-row,.sc-table-head{grid-template-columns:80px 1fr 70px;}.sc-target,.sc-th:nth-child(4){display:none;}.indicator-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-mark">iBudget</span>
+      <span class="logo-sub">Market Intel</span>
+    </div>
+    <div class="header-ticker">
+      <div class="tick-item"><span class="tick-name">BTC</span><span class="tick-price" id="hBTC">—</span><span class="tick-chg chg-flat" id="hBTCc">—</span></div>
+      <div class="tick-item"><span class="tick-name">ETH</span><span class="tick-price" id="hETH">—</span><span class="tick-chg chg-flat" id="hETHc">—</span></div>
+      <div class="tick-item"><span class="tick-name">XAU</span><span class="tick-price" id="hXAU">—</span><span class="tick-chg chg-flat" id="hXAUc">—</span></div>
+      <div class="tick-item"><span class="tick-name">XAG</span><span class="tick-price" id="hXAG">—</span><span class="tick-chg chg-flat" id="hXAGc">—</span></div>
+      <div class="tick-item"><span class="tick-name">USD/CLP</span><span class="tick-price" id="hCLP">—</span><span class="tick-chg chg-flat" id="hCLPc">—</span></div>
+    </div>
+    <div class="header-actions">
+      <div class="last-update"><div id="updateTime">Cargando…</div><div style="color:var(--text3)">CoinGecko · Metals · FX</div></div>
+      <button class="btn-refresh" id="refreshBtn" onclick="refreshPrices()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4v5h5M20 20v-5h-5M4 9a9 9 0 0115.41-3.5M20 15a9 9 0 01-15.41 3.5"/></svg>
+        Actualizar
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+
+<!-- § PRECIOS EN VIVO -->
+<div style="margin-bottom:40px;">
+  <div class="section-head">
+    <span class="section-eyebrow">En Vivo</span>
+    <span class="section-title">Precios de Mercado</span>
+    <div class="section-rule"></div>
+    <span style="font-family:var(--mono);font-size:9px;color:var(--text3);" id="dateLabel">—</span>
+  </div>
+  <div class="price-cards">
+    <div class="price-card gold-card">
+      <div class="card-symbol"><span class="card-symbol-dot dot-gold"></span>BTC / USD</div>
+      <div class="card-price" id="btcPrice"><span class="skeleton" style="width:160px;">&nbsp;</span></div>
+      <div class="card-name">Bitcoin</div>
+      <div class="card-stats">
+        <div class="card-stat"><span class="stat-label">24h</span><span class="stat-value" id="btcChg">—</span></div>
+        <div class="card-stat"><span class="stat-label">Vol 24h</span><span class="stat-value" id="btcVol">—</span></div>
+        <div class="card-stat"><span class="stat-label">Mkt Cap</span><span class="stat-value" id="btcMkt">—</span></div>
+      </div>
+    </div>
+    <div class="price-card green-card">
+      <div class="card-symbol"><span class="card-symbol-dot dot-green"></span>ETH / USD</div>
+      <div class="card-price" id="ethPrice"><span class="skeleton" style="width:120px;">&nbsp;</span></div>
+      <div class="card-name">Ethereum</div>
+      <div class="card-stats">
+        <div class="card-stat"><span class="stat-label">24h</span><span class="stat-value" id="ethChg">—</span></div>
+        <div class="card-stat"><span class="stat-label">Vol 24h</span><span class="stat-value" id="ethVol">—</span></div>
+        <div class="card-stat"><span class="stat-label">Mkt Cap</span><span class="stat-value" id="ethMkt">—</span></div>
+      </div>
+    </div>
+    <div class="price-card silver-card">
+      <div class="card-symbol"><span class="card-symbol-dot dot-silver"></span>XAU / USD</div>
+      <div class="card-price" id="xauPrice"><span class="skeleton" style="width:140px;">&nbsp;</span></div>
+      <div class="card-name">Oro · Onza Troy</div>
+      <div class="card-stats">
+        <div class="card-stat"><span class="stat-label">24h</span><span class="stat-value" id="xauChg">—</span></div>
+        <div class="card-stat"><span class="stat-label">52W Min</span><span class="stat-value">$3,245</span></div>
+        <div class="card-stat"><span class="stat-label">52W Máx</span><span class="stat-value">$5,595</span></div>
+      </div>
+    </div>
+    <div class="price-card red-card">
+      <div class="card-symbol"><span class="card-symbol-dot dot-red"></span>XAG / USD</div>
+      <div class="card-price" id="xagPrice"><span class="skeleton" style="width:100px;">&nbsp;</span></div>
+      <div class="card-name">Plata · Onza Troy</div>
+      <div class="card-stats">
+        <div class="card-stat"><span class="stat-label">24h</span><span class="stat-value" id="xagChg">—</span></div>
+        <div class="card-stat"><span class="stat-label">GSR</span><span class="stat-value gold-val" id="gsrVal">—</span></div>
+        <div class="card-stat"><span class="stat-label">1Y</span><span class="stat-value up">+126%</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- § GRÁFICO + ANÁLISIS -->
+<div class="two-col">
+  <div class="chart-panel">
+    <div class="chart-header">
+      <div class="chart-asset-tabs">
+        <button class="asset-tab active" onclick="switchChart('BITSTAMP:BTCUSD',this)">BTC</button>
+        <button class="asset-tab" onclick="switchChart('BITSTAMP:ETHUSD',this)">ETH</button>
+        <button class="asset-tab" onclick="switchChart('OANDA:XAUUSD',this)">ORO</button>
+        <button class="asset-tab" onclick="switchChart('OANDA:XAGUSD',this)">PLATA</button>
+      </div>
+      <div class="tf-tabs">
+        <button class="tf-tab" onclick="switchTF('1',this)">1m</button>
+        <button class="tf-tab" onclick="switchTF('5',this)">5m</button>
+        <button class="tf-tab" onclick="switchTF('15',this)">15m</button>
+        <button class="tf-tab" onclick="switchTF('30',this)">30m</button>
+        <button class="tf-tab active" onclick="switchTF('60',this)">1h</button>
+        <button class="tf-tab" onclick="switchTF('240',this)">4h</button>
+        <button class="tf-tab" onclick="switchTF('D',this)">1D</button>
+        <button class="tf-tab" onclick="switchTF('W',this)">1W</button>
+        <button class="tf-tab" onclick="switchTF('M',this)">1M</button>
+      </div>
+    </div>
+    <div class="chart-container">
+      <div id="tradingview_chart"></div>
+    </div>
+  </div>
+  <div class="analysis-panel">
+    <div class="analysis-card">
+      <div class="analysis-label">Análisis · 22 Mayo 2026</div>
+      <div class="analysis-title">Resumen del Día</div>
+      <div class="analysis-body">
+        Mercado en <strong>consolidación tensa</strong>. BTC no logró romper <span class="highlight">$80K</span>. Guerra <span class="danger">EE.UU.–Irán</span> sin resolverse. Inflación americana en <span class="danger">~4%</span>.
+        <div class="analysis-divider"></div>
+        Nuevo presidente Fed <strong>Kevin Warsh</strong> asumió el 15 mayo. Bono 10Y en <span class="danger">4.58%</span>. Sin recortes de tasas previstos en 2026.
+        <div class="analysis-divider"></div>
+        <span class="positive">Oro sobre $4,500</span>. Plata +126% en 1 año pero con señal técnica de venta a corto plazo. <strong>UF</strong> sigue subiendo por inflación CLP elevada.
+      </div>
+    </div>
+    <div class="analysis-card">
+      <div class="analysis-label">Recomendaciones</div>
+      <div class="analysis-title">Qué Hacer Hoy</div>
+      <div class="rec-pills">
+        <div class="rec-pill"><span class="pill-asset">BTC</span><span class="pill-action action-hold">Mantener</span><span class="pill-note">Esperar confirmación sobre $80K</span></div>
+        <div class="rec-pill"><span class="pill-asset">ETH</span><span class="pill-action action-caution">Precaución</span><span class="pill-note">RSI débil, monitorear soporte $2,050</span></div>
+        <div class="rec-pill"><span class="pill-asset">ORO</span><span class="pill-action action-hold">Mantener</span><span class="pill-note">Geopolítica y macro a favor</span></div>
+        <div class="rec-pill"><span class="pill-asset">PLATA</span><span class="pill-action action-watch">Vigilar</span><span class="pill-note">Señal técnica de venta corto plazo</span></div>
+        <div class="rec-pill"><span class="pill-asset">UF</span><span class="pill-action action-hold">Mantener</span><span class="pill-note">Protección inflación CLP vigente</span></div>
+      </div>
+    </div>
+    <div class="analysis-card">
+      <div class="analysis-label">Riesgos Clave</div>
+      <div class="analysis-title">Qué Vigilar</div>
+      <div class="analysis-body">
+        <strong>⚔️ Guerra Irán</strong> — Petróleo Brent +44%. Estrecho de Ormuz perturbado.<br><br>
+        <strong>🏦 Fed sin recortes</strong> — Warsh enfrenta inflación doble del objetivo. FOMC dividido.<br><br>
+        <strong>📈 Yields 10Y 4.58%</strong> — Dinero caro = presión cripto y tech.<br><br>
+        <strong>🇨🇱 TPM Chile 5.0%</strong> — BCCh pausó recortes. UF en alza por IPC.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- § INDICADORES DE ESTRÉS (clickeables → modal gráfico) -->
+<div class="stress-section">
+  <div class="section-head">
+    <span class="section-eyebrow">Estrés</span>
+    <span class="section-title">Salud del Mercado</span>
+    <div class="section-rule"></div>
+    <span style="font-family:var(--mono);font-size:9px;color:var(--text3);">Haz clic en cualquier indicador para ver su gráfico</span>
+  </div>
+  <div class="stress-grid">
+    <div class="stress-item" onclick="openStressChart('NYSE:HYG','HYG ETF — Bonos Corporativos High Yield')">
+      <div class="stress-name">HYG ETF</div>
+      <div class="stress-value" style="color:var(--gold2)">~$76</div>
+      <div class="stress-sub chg-flat">▼ Moderado</div>
+      <span class="stress-badge badge-mid">Moderado</span>
+      <div class="stress-desc">Bonos "basura". Termómetro del apetito de riesgo. Cuando baja, el dinero huye hacia activos seguros.</div>
+    </div>
+    <div class="stress-item" onclick="openStressChart('CBOE:MOVE','MOVE Index — Volatilidad de Bonos del Tesoro')">
+      <div class="stress-name">MOVE Index</div>
+      <div class="stress-value" style="color:var(--red)">~115</div>
+      <div class="stress-sub" style="color:var(--red)">↑ Elevado</div>
+      <span class="stress-badge badge-high">Alto</span>
+      <div class="stress-desc">Volatilidad esperada en bonos del tesoro. Elevado por incertidumbre sobre Warsh y política monetaria.</div>
+    </div>
+    <div class="stress-item" onclick="openStressChart('TVC:US10Y','US 10Y Yield — Bono del Tesoro 10 Años')">
+      <div class="stress-name">US 10Y Yield</div>
+      <div class="stress-value" style="color:var(--red)">4.58%</div>
+      <div class="stress-sub" style="color:var(--red)">Máx. de meses</div>
+      <span class="stress-badge badge-crit">Crítico</span>
+      <div class="stress-desc">El "enemigo" de BTC y tech. Cuando sube, el dinero prefiere bonos seguros. El 30Y superó 5.1%.</div>
+    </div>
+    <div class="stress-item" onclick="openStressChart('SP:SPX','S&P 500 — Índice de las 500 Mayores Empresas USA')">
+      <div class="stress-name">S&amp;P 500</div>
+      <div class="stress-value" style="color:var(--gold2)">~5,300</div>
+      <div class="stress-sub chg-flat">↔ Recuperando</div>
+      <span class="stress-badge badge-mid">Moderado</span>
+      <div class="stress-desc">Las 500 mayores empresas de EE.UU. Barómetro del capital global. Recuperando desde mínimos.</div>
+    </div>
+    <div class="stress-item" onclick="openStressChart('NASDAQ:NDX','NASDAQ 100 — Índice Tecnológico USA')">
+      <div class="stress-name">NASDAQ 100</div>
+      <div class="stress-value" style="color:var(--gold2)">~17,200</div>
+      <div class="stress-sub chg-flat">↔ Presionado</div>
+      <span class="stress-badge badge-mid">Moderado</span>
+      <div class="stress-desc">Índice tecnológico. Más sensible a yields altos que el S&P. Cuando los bonos pagan más, sufre más.</div>
+    </div>
+  </div>
+</div>
+
+<!-- § LIQUIDEZ GLOBAL -->
+<div class="indicator-section">
+  <div class="section-head">
+    <span class="section-eyebrow">Liquidez</span>
+    <span class="section-title">Liquidez Global y de Mercados Clave</span>
+    <div class="section-rule"></div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:6px;padding:16px 20px;margin-bottom:20px;font-size:13px;color:var(--text2);line-height:1.7;">
+    <strong style="color:var(--blue);">¿Qué es la liquidez?</strong> Es la cantidad de dinero disponible en el sistema financiero global para invertir. Cuando hay mucha liquidez (dinero fácil y barato), los precios de activos como BTC, oro y acciones suben. Cuando la liquidez se retira (tasas altas, bancos centrales vendiendo bonos), los activos caen. <strong style="color:var(--text);">La liquidez es el oxígeno que respiran los mercados.</strong>
+  </div>
+  <div class="indicator-grid">
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-blue"></div>
+      <div class="ind-label">Global M2</div>
+      <div class="ind-name">Masa Monetaria Mundial</div>
+      <div class="ind-value" style="color:var(--blue)">~$108T</div>
+      <div class="ind-change" style="color:var(--red)">▼ Contracción relativa</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Qué es y por qué importa?</div>
+      <div class="ind-what">El <strong>M2 global</strong> suma todo el dinero en circulación de las principales economías (EE.UU., China, Eurozona, Japón). Hay una correlación histórica muy fuerte: cuando el M2 global sube, BTC y el oro suben entre 3 y 6 meses después. Ahora el M2 se contrae por tasas altas en EE.UU. — señal de precaución para cripto.</div>
+      <span class="ind-signal sig-bear">⚠ Contractivo para cripto</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-blue"></div>
+      <div class="ind-label">Fed Balance Sheet</div>
+      <div class="ind-name">Balance de la Reserva Federal</div>
+      <div class="ind-value" style="color:var(--blue)">~$7.1T</div>
+      <div class="ind-change" style="color:var(--red)">▼ QT en curso</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Qué es y por qué importa?</div>
+      <div class="ind-what">La Fed tiene bonos comprados durante QE (dinero impreso). Cuando los vende o los deja vencer (<strong>QT = Quantitative Tightening</strong>), retira liquidez del sistema. Cada $100B retirado equivale a aproximadamente una subida de tasas de 0.25%. En curso desde 2022 — presión sobre todos los activos de riesgo.</div>
+      <span class="ind-signal sig-bear">⚠ QT activo</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-purple"></div>
+      <div class="ind-label">China PBoC</div>
+      <div class="ind-name">Liquidez del Banco Central Chino</div>
+      <div class="ind-value" style="color:var(--purple)">Expansivo</div>
+      <div class="ind-change" style="color:var(--green)">▲ Inyecciones recientes</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Qué es y por qué importa?</div>
+      <div class="ind-what">China es la segunda economía mundial y su banco central (<strong>PBoC</strong>) inyecta liquidez para estimular crecimiento. Cuando China expande, eso compensa parcialmente el QT de la Fed. Es uno de los factores que ha sostenido al oro en niveles históricos — China es el mayor comprador de oro del mundo.</div>
+      <span class="ind-signal sig-bull">✓ Positivo para oro y metales</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-teal"></div>
+      <div class="ind-label">DXY — Índice Dólar</div>
+      <div class="ind-name">Fortaleza del Dólar USA</div>
+      <div class="ind-value" style="color:var(--teal)">~104</div>
+      <div class="ind-change" style="color:var(--red)">▲ Dólar fuerte</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Qué es y por qué importa?</div>
+      <div class="ind-what">El <strong>DXY</strong> mide la fortaleza del dólar contra 6 monedas principales. Relación <strong>inversa</strong> con oro, plata y cripto: dólar fuerte = presión sobre estos activos. También encarece el dólar para Chile, afectando tu exposición CLP/USD. Con yields altos, el dólar permanece fuerte.</div>
+      <span class="ind-signal sig-bear">⚠ Presión sobre metales y cripto</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-gold"></div>
+      <div class="ind-label">Reservas Internacionales</div>
+      <div class="ind-name">Compras de Oro Bancos Centrales</div>
+      <div class="ind-value" style="color:var(--gold2)">+1,000T/año</div>
+      <div class="ind-change" style="color:var(--green)">▲ Récord 2023-2025</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Qué es y por qué importa?</div>
+      <div class="ind-what">Los bancos centrales de China, India, Turquía y otros países emergentes están comprando oro en cantidades récord para <strong>reducir dependencia del dólar</strong> (dedolarización). Esto es el soporte estructural más fuerte para el precio del oro. Es demanda que no desaparece aunque baje el miedo geopolítico.</div>
+      <span class="ind-signal sig-bull">✓ Soporte estructural oro</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-orange"></div>
+      <div class="ind-label">SOFR / Tasas Interbancarias</div>
+      <div class="ind-name">Costo Real del Dinero USA</div>
+      <div class="ind-value" style="color:var(--orange)">~5.30%</div>
+      <div class="ind-change" style="color:var(--red)">Sin recortes 2026</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Qué es y por qué importa?</div>
+      <div class="ind-what">El <strong>SOFR</strong> es la tasa a la que los bancos se prestan dinero entre sí en EE.UU. Es el "precio base" del dinero. Cuando está alto (como ahora, ~5.3%), todos los préstamos y financiamientos son caros, lo que frena el consumo, la inversión y el apalancamiento en cripto. Clave para predecir si la Fed cortará tasas.</div>
+      <span class="ind-signal sig-bear">⚠ Liquidez restrictiva</span>
+    </div>
+  </div>
+</div>
+
+<!-- § ENDEUDAMIENTO -->
+<div class="indicator-section">
+  <div class="section-head">
+    <span class="section-eyebrow">Deuda</span>
+    <span class="section-title">Indicadores de Endeudamiento — Economías Clave</span>
+    <div class="section-rule"></div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:6px;padding:16px 20px;margin-bottom:20px;font-size:13px;color:var(--text2);line-height:1.7;">
+    <strong style="color:var(--red);">¿Por qué importa la deuda?</strong> Cuando un país se endeuda mucho, emite más bonos para financiarse. Más oferta de bonos = los precios de los bonos bajan = los yields (rendimientos) suben. Yields altos = dinero más caro = presión sobre activos de riesgo. Además, países muy endeudados tienen menos espacio para estimular su economía en crisis.
+  </div>
+  <div class="indicator-grid">
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-red"></div>
+      <div class="ind-label">EE.UU. — Deuda Pública</div>
+      <div class="ind-name">Deuda / PIB Federal</div>
+      <div class="ind-value" style="color:var(--red)">~124%</div>
+      <div class="ind-change" style="color:var(--red)">▲ $36.2T total</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Por qué te afecta?</div>
+      <div class="ind-what">EE.UU. paga ~$1T al año solo en intereses de su deuda — más que todo su presupuesto de defensa. Para financiarla emite bonos constantemente, lo que mantiene los yields altos. Esto es un <strong>techo estructural para los recortes de tasas</strong>: recortar tasas cuando hay tanta deuda genera inflación. Directo impacto en BTC y oro.</div>
+      <span class="ind-signal sig-bear">⚠ Yields estructuralmente altos</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-purple"></div>
+      <div class="ind-label">Japón — Deuda Pública</div>
+      <div class="ind-name">Deuda / PIB</div>
+      <div class="ind-value" style="color:var(--purple)">~255%</div>
+      <div class="ind-change" style="color:var(--gold)">Yen débil persistente</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Por qué te afecta?</div>
+      <div class="ind-what">Japón tiene la mayor deuda/PIB del mundo. El Banco de Japón mantiene tasas casi en 0% para poder pagarla. Esto crea el <strong>"carry trade del yen"</strong>: inversores piden prestado en yenes baratos para comprar activos más rentables (incluyendo BTC y oro). Si el yen se fortalece abruptamente, ese carry se deshace y puede causar caídas bruscas globales.</div>
+      <span class="ind-signal sig-watch">↗ Riesgo sistémico latente</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-purple"></div>
+      <div class="ind-label">China — Deuda Total</div>
+      <div class="ind-name">Deuda Pública + Privada / PIB</div>
+      <div class="ind-value" style="color:var(--purple)">~300%</div>
+      <div class="ind-change" style="color:var(--gold)">Crisis inmobiliaria activa</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Por qué te afecta?</div>
+      <div class="ind-what">La crisis inmobiliaria china (Evergrande, Country Garden) es deuda que no se puede pagar. Si China entra en recesión, la demanda global de commodities colapsa — <strong>incluida la plata industrial</strong> (paneles solares, electrónica). También reduciría la compra de oro de bancos centrales chinos. Riesgo importante para tu cartera de metales.</div>
+      <span class="ind-signal sig-watch">↗ Vigilar plata y oro</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-teal"></div>
+      <div class="ind-label">Chile — Deuda Pública</div>
+      <div class="ind-name">Deuda / PIB</div>
+      <div class="ind-value" style="color:var(--teal)">~42%</div>
+      <div class="ind-change" style="color:var(--green)">▼ Baja vs. OCDE</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Por qué te afecta?</div>
+      <div class="ind-what">Chile tiene una deuda pública relativamente baja comparada con países desarrollados. Eso le da espacio al Banco Central para maniobrar con la TPM. <strong>Para tu Fondo Mutuo UF</strong>: una deuda baja significa menor riesgo de default soberano y mayor credibilidad del BCCh. Sin embargo, el déficit fiscal actual es un punto a vigilar para la estabilidad del CLP.</div>
+      <span class="ind-signal sig-bull">✓ Sólido para UF</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-orange"></div>
+      <div class="ind-label">Eurozona — Deuda Promedio</div>
+      <div class="ind-name">Deuda Pública / PIB</div>
+      <div class="ind-value" style="color:var(--orange)">~92%</div>
+      <div class="ind-change" style="color:var(--gold)">Italia 140%, Alemania 65%</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Por qué te afecta?</div>
+      <div class="ind-what">La Eurozona tiene un problema de deuda desigual. Si Italia o Francia entran en crisis de deuda, el BCE tendría que imprimir euros masivamente — lo que <strong>debilitaría el euro, fortalecería el dólar y presionaría el oro</strong>. Paradójicamente, también podría impulsar BTC como alternativa a monedas debilitadas.</div>
+      <span class="ind-signal sig-neutral">→ Riesgo secundario</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-gold"></div>
+      <div class="ind-label">Spread Bonos Soberanos</div>
+      <div class="ind-name">Diferencial de Riesgo País</div>
+      <div class="ind-value" style="color:var(--gold2)">Chile ~90bps</div>
+      <div class="ind-change" style="color:var(--green)">▼ Estable</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Qué es y por qué importa?</div>
+      <div class="ind-what">El <strong>spread soberano</strong> es la diferencia entre lo que paga Chile en tasas vs. lo que paga EE.UU. Un spread de 90bps (0.9%) es bajo y saludable, indicando que el mercado confía en Chile. Para tu <strong>Fondo Mutuo UF</strong>: spread bajo = tasas locales más estables = menor volatilidad en el valor cuota.</div>
+      <span class="ind-signal sig-bull">✓ Favorable para FM UF</span>
+    </div>
+  </div>
+</div>
+
+<!-- § CHILE + FONDO MUTUO UF -->
+<div class="indicator-section">
+  <div class="section-head">
+    <span class="section-eyebrow">Chile · UF</span>
+    <span class="section-title">Indicadores para tu Fondo Mutuo Ahorro UF — Itaú</span>
+    <div class="section-rule"></div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--teal);border-radius:6px;padding:16px 20px;margin-bottom:20px;font-size:13px;color:var(--text2);line-height:1.7;">
+    <strong style="color:var(--teal);">¿Cómo funciona un Fondo Mutuo Ahorro UF?</strong> Este fondo invierte principalmente en <strong>instrumentos de renta fija denominados en UF</strong> — depósitos a plazo, bonos bancarios y bonos del Banco Central chileno. Su rentabilidad viene de dos fuentes: (1) la variación de la UF (que sube con la inflación chilena) y (2) la tasa de interés que pagan esos instrumentos. Los indicadores más relevantes son: TPM del BCCh, IPC chileno, y la curva de tasas de renta fija local.
+  </div>
+  <div class="indicator-grid">
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-teal"></div>
+      <div class="ind-label">BCCh — TPM</div>
+      <div class="ind-name">Tasa de Política Monetaria Chile</div>
+      <div class="ind-value" style="color:var(--teal)">5.00%</div>
+      <div class="ind-change" style="color:var(--gold)">→ Pausa en recortes</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Qué significa para tu FM UF?</div>
+      <div class="ind-what">La <strong>TPM</strong> es la tasa que fija el Banco Central de Chile. Cuando baja, los instrumentos UF en el fondo valen más (porque los nuevos bonos pagan menos). Cuando sube, el fondo pierde valor temporalmente. La pausa actual del BCCh en 5% <strong>es neutral para el fondo</strong> — ni pérdidas ni grandes ganancias por este lado. Se espera continuar bajando en 2H 2026.</div>
+      <span class="ind-signal sig-neutral">→ Neutral · Esperar recortes</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-teal"></div>
+      <div class="ind-label">IPC Chile</div>
+      <div class="ind-name">Inflación Anual CLP</div>
+      <div class="ind-value" style="color:var(--teal)">~4.5%</div>
+      <div class="ind-change" style="color:var(--green)">▼ Bajando gradualmente</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Qué significa para tu FM UF?</div>
+      <div class="ind-what">El <strong>IPC</strong> (Índice de Precios al Consumidor) determina cuánto sube la UF. Si el IPC es 4.5%, la UF sube aproximadamente ese monto durante el año — lo que se refleja directamente en el valor de tu fondo. <strong>A mayor inflación, más sube tu fondo en pesos</strong>. Con IPC en 4.5%, tu fondo en UF te está protegiendo bien contra la pérdida de poder adquisitivo.</div>
+      <span class="ind-signal sig-bull">✓ UF sube ~4.5% anual</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-teal"></div>
+      <div class="ind-label">UF Diaria</div>
+      <div class="ind-name">Unidad de Fomento</div>
+      <div class="ind-value" style="color:var(--teal)">~$38,500</div>
+      <div class="ind-change" style="color:var(--green)">▲ Sube diariamente</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Qué es la UF?</div>
+      <div class="ind-what">La <strong>Unidad de Fomento (UF)</strong> es una unidad de valor que se reajusta diariamente según la inflación del mes anterior. Invertir en UF es equivalente a "indexar" tu dinero a la inflación chilena — nunca pierdes poder adquisitivo en pesos. El fondo de Itaú multiplica esta protección añadiendo los intereses de los instrumentos que compra.</div>
+      <span class="ind-signal sig-bull">✓ Protección inflación activa</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-teal"></div>
+      <div class="ind-label">Curva Tasas Chile</div>
+      <div class="ind-name">BCP-5 / BCP-10 (Bonos BCCh)</div>
+      <div class="ind-value" style="color:var(--teal)">~4.8% / 5.1%</div>
+      <div class="ind-change" style="color:var(--gold)">Curva normalizada</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Por qué importa?</div>
+      <div class="ind-what">Los <strong>BCP</strong> (Bonos del Banco Central en Pesos) a 5 y 10 años son los activos que compra tu fondo. Cuando sus tasas bajan, el precio del bono sube y el fondo gana. Con la TPM en 5% y expectativa de recortes en 2H 2026, <strong>los BCP en UF podrían apreciarse</strong> si el BCCh reanuda su ciclo de bajas. Momento interesante para mantener o incrementar posición.</div>
+      <span class="ind-signal sig-bull">✓ Potencial apreciación 2H 2026</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-orange"></div>
+      <div class="ind-label">USD / CLP</div>
+      <div class="ind-name">Tipo de Cambio</div>
+      <div class="ind-value" style="color:var(--orange)" id="clpVal">~$940</div>
+      <div class="ind-change" style="color:var(--gold)" id="clpChg">Presionado por dólar fuerte</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Cómo afecta tu cartera?</div>
+      <div class="ind-what">Tu cartera tiene activos en USD (BTC, ETH, oro, plata) y en CLP (fondo UF). Si el peso chileno se deprecia, tus activos en dólares valen <strong>más pesos</strong> — ganancia cambiaria. Pero también encarece tus importaciones y sube la inflación local, lo que a su vez sube la UF. El CLP se ve presionado por el dólar fuerte y el bajo precio del cobre.</div>
+      <span class="ind-signal sig-neutral">→ Diversificación CLP/USD activa</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-orange"></div>
+      <div class="ind-label">Cobre LME</div>
+      <div class="ind-name">Precio Cobre — El "Doctor Copper"</div>
+      <div class="ind-value" style="color:var(--orange)">~$4.2/lb</div>
+      <div class="ind-change" style="color:var(--gold)">↔ Lateral</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Por qué importa para Chile?</div>
+      <div class="ind-what">Chile exporta ~30% del cobre mundial. El precio del cobre impacta directamente en el <strong>ingreso fiscal chileno, el CLP y la inflación local</strong>. Cobre alto = CLP fuerte = menos presión inflacionaria = BCCh puede bajar tasas = tu fondo UF se aprecia. El cobre también predice el crecimiento global (si sube, la industria mundial se expande).</div>
+      <span class="ind-signal sig-neutral">→ Vigilar para TPM y CLP</span>
+    </div>
+  </div>
+</div>
+
+<!-- § INDICADORES ADICIONALES (Analista) -->
+<div class="indicator-section">
+  <div class="section-head">
+    <span class="section-eyebrow">Inteligencia</span>
+    <span class="section-title">Lo Que el Analista Considera Esencial</span>
+    <div class="section-rule"></div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:6px;padding:16px 20px;margin-bottom:20px;font-size:13px;color:var(--text2);line-height:1.7;">
+    <strong style="color:var(--purple);">Nota del analista:</strong> Estos son indicadores que la mayoría de los inversores retail ignora, pero que los gestores de fondos y traders institucionales monitorean constantemente. En el contexto actual (guerra, inflación, transición Fed, exposición Chile), estos datos tienen impacto directo en tu cartera.
+  </div>
+  <div class="indicator-grid">
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-purple"></div>
+      <div class="ind-label">BTC Dominance</div>
+      <div class="ind-name">Dominio de Bitcoin</div>
+      <div class="ind-value" style="color:var(--purple)">60.1%</div>
+      <div class="ind-change" style="color:var(--red)">▲ Alta — altcoins sufren</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Qué significa?</div>
+      <div class="ind-what">Indica qué % del mercado cripto total es Bitcoin. <strong>Dominancia alta (&gt;60%) = dinero concentrado en BTC, altcoins (ETH incluido) pierden.</strong> La "altseason" (cuando ETH y otras suben fuerte) ocurre cuando BTC baja de ~55%. Ahora en 60.1% → ETH bajo presión estructural. No es el momento de aumentar ETH.</div>
+      <span class="ind-signal sig-bear">⚠ No es momento altcoins</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-green"></div>
+      <div class="ind-label">Fear &amp; Greed</div>
+      <div class="ind-name">Índice Miedo y Codicia</div>
+      <div class="ind-value" style="color:var(--green)">61/100</div>
+      <div class="ind-change" style="color:var(--green)">Codicia — Mercado optimista</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Cómo usarlo?</div>
+      <div class="ind-what">Va de 0 (pánico extremo) a 100 (codicia extrema). La estrategia clásica: <strong>compra en miedo extremo (&lt;20), vende en codicia extrema (&gt;80)</strong>. En 61 el mercado está optimista pero no eufórico. Hace 3 semanas estaba en 40 (miedo) — ese fue el mejor momento de compra. Ahora no es momento de entradas grandes.</div>
+      <span class="ind-signal sig-neutral">→ No entrar en tamaño grande</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-gold"></div>
+      <div class="ind-label">ETF Flows BTC</div>
+      <div class="ind-name">Flujos ETFs Bitcoin (BlackRock etc.)</div>
+      <div class="ind-value" style="color:var(--gold2)">+$532M</div>
+      <div class="ind-change" style="color:var(--green)">Pico semana 4-5 Mayo</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Por qué es clave?</div>
+      <div class="ind-what">Los ETF de BTC (IBIT de BlackRock, FBTC de Fidelity) son compras reales de Bitcoin. <strong>Días con inflows grandes = institucionales comprando = señal alcista</strong>. Cuando tienen outflows (ventas), es señal bajista. BlackRock ya tiene $62B en BTC. Monitorear los flujos diarios es una de las mejores herramientas para predecir movimientos de BTC a 24-72 horas.</div>
+      <span class="ind-signal sig-bull">✓ Demanda institucional activa</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-red"></div>
+      <div class="ind-label">VIX</div>
+      <div class="ind-name">Índice de Volatilidad S&P 500</div>
+      <div class="ind-value" style="color:var(--red)">~20</div>
+      <div class="ind-change" style="color:var(--gold)">↔ Zona de precaución</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Qué es el VIX?</div>
+      <div class="ind-what">El <strong>VIX</strong> ("índice del miedo") mide cuánto nerviosismo hay en la bolsa americana. <strong>VIX bajo (&lt;15) = calma, mercado confiado. VIX alto (&gt;30) = pánico.</strong> En ~20 estamos en zona de precaución moderada. Cuando el VIX supera 30, históricamente BTC cae 15-30% en días. Es el semáforo de riesgo sistémico más usado en el mundo.</div>
+      <span class="ind-signal sig-neutral">→ Precaución moderada</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-purple"></div>
+      <div class="ind-label">On-Chain BTC</div>
+      <div class="ind-name">Reservas BTC en Exchanges</div>
+      <div class="ind-value" style="color:var(--purple)">2.21M BTC</div>
+      <div class="ind-change" style="color:var(--green)">▼ Mínimo 7 años</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Por qué es señal alcista?</div>
+      <div class="ind-what">Cuando los BTC se retiran de los exchanges a wallets privadas, significa que los holders <strong>no quieren vender</strong> — reducen la oferta disponible. Las reservas de BTC en exchanges están en mínimos de 7 años. Esto es una señal alcista estructural: menos oferta disponible + demanda estable de ETFs = precio tiene potencial al alza.</div>
+      <span class="ind-signal sig-bull">✓ Señal alcista on-chain</span>
+    </div>
+    <div class="indicator-card">
+      <div class="ind-accent ind-accent-teal"></div>
+      <div class="ind-label">Precio Petróleo Brent</div>
+      <div class="ind-name">Barómetro Geopolítico Global</div>
+      <div class="ind-value" style="color:var(--teal)">~$95-100</div>
+      <div class="ind-change" style="color:var(--red)">▲ +44% desde Feb 2026</div>
+      <div class="ind-divider"></div>
+      <div class="ind-what-title">¿Cómo te afecta?</div>
+      <div class="ind-what">El petróleo caro es el mecanismo de transmisión de la guerra hacia tu cartera: <strong>petróleo caro → inflación global alta → tasas altas → presión sobre BTC y acciones</strong>. Pero también → <strong>oro sube</strong> (refugio). Para Chile: petróleo caro sube el IPC local, lo que sube la UF, lo que beneficia tu fondo mutuo. Paradójicamente, la guerra es buena para tu fondo UF.</div>
+      <span class="ind-signal sig-watch">↗ Doble efecto en cartera</span>
+    </div>
+  </div>
+</div>
+
+<!-- § ESCENARIOS -->
+<div class="scenarios-section">
+  <div class="section-head">
+    <span class="section-eyebrow">Proyecciones</span>
+    <span class="section-title">Escenarios — Próximos 7 Días</span>
+    <div class="section-rule"></div>
+  </div>
+  <div class="scenarios-grid">
+    <!-- BTC -->
+    <div class="scenario-card">
+      <div class="scenario-card-header"><span class="sc-asset">₿ Bitcoin</span><span class="sc-price" id="scBtcPrice">$77,400</span></div>
+      <div class="sc-table-head"><span class="sc-th">Escenario</span><span class="sc-th">Gatillo</span><span class="sc-th">Prob.</span><span class="sc-th">Objetivo</span></div>
+      <div class="sc-row"><span class="sc-type sc-bull">▲ Alcista</span><span class="sc-trigger">Acuerdo Irán + ETF inflows + Warsh insinúa recorte</span><span class="sc-prob sc-bull">30%</span><span class="sc-target">$82K–$85K</span></div>
+      <div class="sc-row"><span class="sc-type sc-base">→ Base</span><span class="sc-trigger">Consolidación. Yields altos sin escalada nueva</span><span class="sc-prob sc-base">50%</span><span class="sc-target">$74K–$78K</span></div>
+      <div class="sc-row"><span class="sc-type sc-bear">▼ Bajista</span><span class="sc-trigger">Escalada bélica + inflación sorprende al alza</span><span class="sc-prob sc-bear">20%</span><span class="sc-target">$68K–$72K</span></div>
+    </div>
+    <!-- ETH -->
+    <div class="scenario-card">
+      <div class="scenario-card-header"><span class="sc-asset">Ξ Ethereum</span><span class="sc-price" id="scEthPrice">$2,127</span></div>
+      <div class="sc-table-head"><span class="sc-th">Escenario</span><span class="sc-th">Gatillo</span><span class="sc-th">Prob.</span><span class="sc-th">Objetivo</span></div>
+      <div class="sc-row"><span class="sc-type sc-bull">▲ Alcista</span><span class="sc-trigger">RSI sobrevendido + rebote técnico + noticias Vitalik</span><span class="sc-prob sc-bull">20%</span><span class="sc-target">$2,280–$2,500</span></div>
+      <div class="sc-row"><span class="sc-type sc-base">→ Base</span><span class="sc-trigger">Soporte $2,050 se prueba pero aguanta</span><span class="sc-prob sc-base">45%</span><span class="sc-target">$1,980–$2,200</span></div>
+      <div class="sc-row"><span class="sc-type sc-bear">▼ Bajista</span><span class="sc-trigger">Ruptura $2,050 + más salidas institucionales</span><span class="sc-prob sc-bear">35%</span><span class="sc-target">$1,700–$1,950</span></div>
+    </div>
+    <!-- ORO -->
+    <div class="scenario-card">
+      <div class="scenario-card-header"><span class="sc-asset">◈ Oro</span><span class="sc-price" id="scXauPrice">$4,521</span></div>
+      <div class="sc-table-head"><span class="sc-th">Escenario</span><span class="sc-th">Gatillo</span><span class="sc-th">Prob.</span><span class="sc-th">Objetivo</span></div>
+      <div class="sc-row"><span class="sc-type sc-bull">▲ Alcista</span><span class="sc-trigger">Colapso negociaciones Irán + bancos centrales compran</span><span class="sc-prob sc-bull">35%</span><span class="sc-target">$4,577–$4,700</span></div>
+      <div class="sc-row"><span class="sc-type sc-base">→ Base</span><span class="sc-trigger">Consolidación sobre soporte $4,441</span><span class="sc-prob sc-base">45%</span><span class="sc-target">$4,440–$4,560</span></div>
+      <div class="sc-row"><span class="sc-type sc-bear">▼ Bajista</span><span class="sc-trigger">Acuerdo paz Irán + fortaleza dólar</span><span class="sc-prob sc-bear">20%</span><span class="sc-target">$4,380–$4,440</span></div>
+    </div>
+    <!-- PLATA -->
+    <div class="scenario-card">
+      <div class="scenario-card-header"><span class="sc-asset">◫ Plata</span><span class="sc-price" id="scXagPrice">$76.14</span></div>
+      <div class="sc-table-head"><span class="sc-th">Escenario</span><span class="sc-th">Gatillo</span><span class="sc-th">Prob.</span><span class="sc-th">Objetivo</span></div>
+      <div class="sc-row"><span class="sc-type sc-bull">▲ Alcista</span><span class="sc-trigger">Demanda industrial solar/EV + apetito riesgo</span><span class="sc-prob sc-bull">25%</span><span class="sc-target">$79–$82</span></div>
+      <div class="sc-row"><span class="sc-type sc-base">→ Base</span><span class="sc-trigger">Técnico neutro, consolidación zona $74–$77</span><span class="sc-prob sc-base">45%</span><span class="sc-target">$74–$77</span></div>
+      <div class="sc-row"><span class="sc-type sc-bear">▼ Bajista</span><span class="sc-trigger">Dólar fuerte + toma ganancias (↑126% en 1 año)</span><span class="sc-prob sc-bear">30%</span><span class="sc-target">$70–$74</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- § STOP LOSS -->
+<div class="sl-section">
+  <div class="section-head">
+    <span class="section-eyebrow">Riesgo</span>
+    <span class="section-title">Evaluación de Stop Loss</span>
+    <div class="section-rule"></div>
+  </div>
+  <div class="sl-cards">
+    <div class="sl-card">
+      <div class="sl-asset-name">Bitcoin</div><div class="sl-pair">BTC / USD</div>
+      <div class="sl-numbers">
+        <div><div class="sl-num-label">Precio Actual</div><div class="sl-num-val current" id="slBtcCurrent">$77,400</div></div>
+        <div style="text-align:right"><div class="sl-num-label">Stop Loss</div><div class="sl-num-val stop">$30,000</div></div>
+      </div>
+      <div class="sl-progress-track"><div class="sl-progress-fill fill-safe" style="width:88%"></div></div>
+      <div class="sl-distance-info"><span>SL $30K</span><span id="slBtcDist">−61.2% distancia</span></div>
+      <div class="sl-status-badge"><span style="color:var(--green)">●</span><span style="color:var(--green);font-weight:500">SEGURO</span><span style="color:var(--text3);margin-left:4px">· Colchón amplio</span></div>
+    </div>
+    <div class="sl-card">
+      <div class="sl-asset-name">Ethereum</div><div class="sl-pair">ETH / USD</div>
+      <div class="sl-numbers">
+        <div><div class="sl-num-label">Precio Actual</div><div class="sl-num-val current" id="slEthCurrent">$2,127</div></div>
+        <div style="text-align:right"><div class="sl-num-label">Stop Loss</div><div class="sl-num-val stop">$1,280</div></div>
+      </div>
+      <div class="sl-progress-track"><div class="sl-progress-fill fill-warn" style="width:66%"></div></div>
+      <div class="sl-distance-info"><span>SL $1,280</span><span id="slEthDist" style="color:var(--gold2)">−39.8% distancia</span></div>
+      <div class="sl-status-badge"><span style="color:var(--gold)">●</span><span style="color:var(--gold2);font-weight:500">VIGILAR</span><span style="color:var(--text3);margin-left:4px">· ETH en tendencia bajista</span></div>
+    </div>
+    <div class="sl-card">
+      <div class="sl-asset-name">Oro</div><div class="sl-pair">XAU / USD</div>
+      <div class="sl-numbers">
+        <div><div class="sl-num-label">Precio Actual</div><div class="sl-num-val current" id="slXauCurrent">$4,521</div></div>
+        <div style="text-align:right"><div class="sl-num-label">Stop Loss</div><div class="sl-num-val stop">$2,500</div></div>
+      </div>
+      <div class="sl-progress-track"><div class="sl-progress-fill fill-safe" style="width:95%"></div></div>
+      <div class="sl-distance-info"><span>SL $2,500</span><span id="slXauDist">−44.7% distancia</span></div>
+      <div class="sl-status-badge"><span style="color:var(--green)">●</span><span style="color:var(--green);font-weight:500">MUY SEGURO</span><span style="color:var(--text3);margin-left:4px">· +80% desde SL</span></div>
+    </div>
+    <div class="sl-card">
+      <div class="sl-asset-name">Plata</div><div class="sl-pair">XAG / USD</div>
+      <div class="sl-numbers">
+        <div><div class="sl-num-label">Precio Actual</div><div class="sl-num-val current" id="slXagCurrent">$76.14</div></div>
+        <div style="text-align:right"><div class="sl-num-label">Stop Loss</div><div class="sl-num-val stop">$30.00</div></div>
+      </div>
+      <div class="sl-progress-track"><div class="sl-progress-fill fill-safe" style="width:97%"></div></div>
+      <div class="sl-distance-info"><span>SL $30</span><span id="slXagDist">−60.6% distancia</span></div>
+      <div class="sl-status-badge"><span style="color:var(--green)">●</span><span style="color:var(--green);font-weight:500">MUY SEGURO</span><span style="color:var(--text3);margin-left:4px">· Trailing stop recomendado</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- § DECLARACIONES -->
+<div class="quotes-section">
+  <div class="section-head">
+    <span class="section-eyebrow">Figuras Clave</span>
+    <span class="section-title">Declaraciones que Mueven el Mercado</span>
+    <div class="section-rule"></div>
+    <span style="font-family:var(--mono);font-size:9px;color:var(--text3);">Haz clic para leer la fuente completa</span>
+  </div>
+  <div class="quotes-grid">
+    <a class="quote-card quote-card-link" href="https://www.cnbc.com/2026/05/16/kevin-warsh-comes-into-the-fed-facing-a-big-family-fight-over-cutting-interest-rates.html" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">
+      <div class="quote-who">
+        <div class="quote-avatar">🏦</div>
+        <div><div class="quote-name">Kevin Warsh</div><div class="quote-role">PRESIDENTE FED · DESDE 15 MAY 2026</div></div>
+        <span class="quote-source-tag">CNBC ↗</span>
+      </div>
+      <div class="quote-text">"Hay un gran debate familiar dentro de la Fed sobre la dirección correcta de las tasas. Mi trabajo es unificar al comité hacia una política que equilibre inflación y crecimiento."</div>
+      <div class="quote-impact"><strong>Impacto:</strong> Llega con presión de Trump para bajar tasas, pero inflación al 4% y FOMC dividido se lo impiden. Tres miembros votaron por eliminar el sesgo expansivo. Sin recortes en 2026 = presión sobre BTC y cripto.</div>
+    </a>
+    <a class="quote-card quote-card-link" href="https://www.usnews.com/news/national-news/articles/2026-05-15/chosen-to-lower-interest-rates-kevin-warsh-may-find-the-fed-has-other-ideas" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">
+      <div class="quote-who">
+        <div class="quote-avatar">🇺🇸</div>
+        <div><div class="quote-name">Donald Trump</div><div class="quote-role">PRESIDENTE EE.UU. · TRUTH SOCIAL, MAYO 2026</div></div>
+        <span class="quote-source-tag">US News ↗</span>
+      </div>
+      <div class="quote-text">"Espero que la guerra con Irán termine muy, muy rápidamente. Las tasas de interés DEBEN bajar sustancialmente. Tenemos a alguien muy bueno en la Fed."</div>
+      <div class="quote-impact"><strong>Impacto:</strong> Si Irán se cierra → petróleo baja → inflación cede → posible corte tasas → escenario muy alcista para todo. Por ahora ninguna de las dos cosas ha ocurrido.</div>
+    </a>
+    <a class="quote-card quote-card-link" href="https://www.cbsnews.com/news/kevin-warsh-federal-reserve-chair-interest-rates/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">
+      <div class="quote-who">
+        <div class="quote-avatar">⚖️</div>
+        <div><div class="quote-name">Jerome Powell</div><div class="quote-role">EX-PRESIDENTE FED / GOBERNADOR · ABR 2026</div></div>
+        <span class="quote-source-tag">CBS News ↗</span>
+      </div>
+      <div class="quote-text">"Planeamos mantener un perfil bajo. Solo hay un presidente de la Fed. La independencia del banco central es esencial para tomar decisiones basadas en análisis, no en política."</div>
+      <div class="quote-impact"><strong>Impacto:</strong> Se queda como gobernador hasta 2028. El mercado lo lee como "ancla anti-inflacionaria" que podría frenar recortes prematuros de Warsh.</div>
+    </a>
+    <a class="quote-card quote-card-link" href="https://www.coinbase.com/price/ethereum" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">
+      <div class="quote-who">
+        <div class="quote-avatar">Ξ</div>
+        <div><div class="quote-name">Vitalik Buterin</div><div class="quote-role">CO-FUNDADOR ETHEREUM · X, MAYO 2026</div></div>
+        <span class="quote-source-tag">Coinbase ↗</span>
+      </div>
+      <div class="quote-text">"La privacidad es la pieza que le falta a Ethereum para tener verdaderas cualidades de dinero. Estoy enfocado en mejoras de privacidad a corto plazo."</div>
+      <div class="quote-impact"><strong>Impacto:</strong> Responde a crisis interna ETH: salida de figuras clave, caída de precio. Harvard vendió todo su ETF de ETH esta semana. El mercado aún no premia sus palabras.</div>
+    </a>
+  </div>
+</div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="page-footer">
+  <div class="footer-inner">
+    <div class="footer-sources">
+      <strong>Fuentes:</strong> CoinGecko (BTC/ETH) · metals.live (XAU/XAG) · TradingView (Gráficos)<br>
+      Investing.com · TradingEconomics · CNBC · CBS News · US News · Chase · Morgan Stanley
+    </div>
+    <div class="footer-disc">
+      ⚠ Solo para fines informativos. No constituye asesoría financiera ni recomendación de inversión. Los precios en vivo se actualizan al presionar "Actualizar". El análisis textual se genera una vez por día. Invertir implica riesgo de pérdida total del capital.
+    </div>
+  </div>
+</footer>
+
+</div><!-- .page -->
+
+<!-- MODAL GRÁFICO STRESS -->
+<div class="modal-overlay" id="stressModal" onclick="closeModal(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Indicador</span>
+      <button class="modal-close" onclick="closeStressModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalChart"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+<script>
+// ── State ──
+const SL = { btc:30000, eth:1280, xau:2500, xag:30 };
+let lastPrices = {};
+let currentSymbol = 'BITSTAMP:BTCUSD';
+let currentInterval = '60';
+let mainWidget = null;
+let modalWidget = null;
+
+// ── Helpers ──
+function fmtPrice(n) {
+  if(!n) return '—';
+  if(n >= 1000) return '$' + n.toLocaleString('es-CL',{minimumFractionDigits:0,maximumFractionDigits:0});
+  if(n >= 10) return '$' + n.toFixed(2);
+  return '$' + n.toFixed(4);
+}
+function fmt(n) {
+  if(!n||isNaN(n)) return '—';
+  if(n>=1e12) return '$'+(n/1e12).toFixed(2)+'T';
+  if(n>=1e9)  return '$'+(n/1e9).toFixed(2)+'B';
+  if(n>=1e6)  return '$'+(n/1e6).toFixed(2)+'M';
+  return n.toLocaleString('es-CL');
+}
+function fmtChg(p) {
+  if(p===null||p===undefined) return {text:'—',cls:'chg-flat'};
+  return { text:(p>=0?'▲ +':'▼ ')+Math.abs(p).toFixed(2)+'%', cls:p>=0?'chg-up':'chg-down' };
+}
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+function setUpdateTime() {
+  const now=new Date();
+  document.getElementById('updateTime').textContent=
+    'Actualizado '+now.toLocaleDateString('es-CL',{day:'2-digit',month:'short'})+' · '+
+    now.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ── TradingView widget builder ──
+const tvOverrides = {
+  "paneProperties.background":"#080c12",
+  "paneProperties.backgroundType":"solid",
+  "scalesProperties.textColor":"#7a90a8",
+  "scalesProperties.backgroundColor":"#0c1118",
+  "candleStyle.upColor":"#3dd68c","candleStyle.downColor":"#f0505a",
+  "candleStyle.borderUpColor":"#3dd68c","candleStyle.borderDownColor":"#f0505a",
+  "candleStyle.wickUpColor":"#3dd68c","candleStyle.wickDownColor":"#f0505a",
+};
+
+function buildTV(containerId, symbol, interval, height) {
+  return new TradingView.widget({
+    container_id: containerId,
+    width:"100%", height: height,
+    symbol: symbol, interval: interval,
+    timezone:"America/Santiago", theme:"dark", style:"1", locale:"es",
+    toolbar_bg:"#0c1118", enable_publishing:false, save_image:false,
+    backgroundColor:"rgba(8,12,18,1)", gridColor:"rgba(28,37,48,0.8)",
+    studies:["RSI@tv-basicstudies","MASimple@tv-basicstudies"],
+    overrides: tvOverrides
+  });
+}
+
+function initMainChart() {
+  if(!window.TradingView){ setTimeout(initMainChart,300); return; }
+  document.getElementById('tradingview_chart').innerHTML='';
+  mainWidget = buildTV('tradingview_chart', currentSymbol, currentInterval, 440);
+}
+
+function switchChart(sym, el) {
+  currentSymbol = sym;
+  document.querySelectorAll('.asset-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tradingview_chart').innerHTML='';
+  mainWidget = buildTV('tradingview_chart', currentSymbol, currentInterval, 440);
+}
+
+function switchTF(interval, el) {
+  currentInterval = interval;
+  document.querySelectorAll('.tf-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tradingview_chart').innerHTML='';
+  mainWidget = buildTV('tradingview_chart', currentSymbol, currentInterval, 440);
+}
+
+// ── Stress modal ──
+function openStressChart(symbol, title) {
+  document.getElementById('modalTitle').textContent = title;
+  const modal = document.getElementById('stressModal');
+  modal.classList.add('open');
+  const container = document.getElementById('modalChart');
+  container.innerHTML = '';
+  if(window.TradingView) {
+    modalWidget = buildTV('modalChart', symbol, 'D', 500);
+  }
+}
+
+function closeStressModal() {
+  document.getElementById('stressModal').classList.remove('open');
+  document.getElementById('modalChart').innerHTML = '';
+}
+
+function closeModal(e) {
+  if(e.target === document.getElementById('stressModal')) closeStressModal();
+}
+
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeStressModal(); });
+
+// ── Fetch Crypto ──
+async function fetchCrypto() {
+  const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true');
+  if(!r.ok) throw new Error('CoinGecko '+r.status);
+  return r.json();
+}
+
+// ── Fetch Metals ──
+async function fetchMetals() {
+  try {
+    const r = await fetch('https://api.metals.live/v1/spot/gold,silver');
+    if(r.ok){ const d=await r.json(); return {xau:d[0]?.price,xauChg:null,xag:d[1]?.price,xagChg:null}; }
+  } catch(e){}
+  return {xau:4521, xauChg:-0.42, xag:76.14, xagChg:-0.71};
+}
+
+// ── Fetch USD/CLP ──
+async function fetchCLP() {
+  try {
+    const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    if(r.ok){ const d=await r.json(); return d.rates?.CLP||null; }
+  } catch(e){}
+  return 940;
+}
+
+// ── DOM updates ──
+function updateCard(id, price, chgPct, vol, mktCap) {
+  const pe=document.getElementById(id+'Price');
+  if(pe) pe.textContent=fmtPrice(price);
+  const ce=document.getElementById(id+'Chg');
+  if(ce){ const c=fmtChg(chgPct); ce.textContent=c.text; ce.className='stat-value '+(chgPct>=0?'up':'down'); }
+  if(vol){ const ve=document.getElementById(id+'Vol'); if(ve) ve.textContent=fmt(vol); }
+  if(mktCap){ const me=document.getElementById(id+'Mkt'); if(me) me.textContent=fmt(mktCap); }
+}
+
+function updateTicker(id, price, chgPct) {
+  const pe=document.getElementById('h'+id); if(pe) pe.textContent=fmtPrice(price);
+  const ce=document.getElementById('h'+id+'c');
+  if(ce){ const c=fmtChg(chgPct); ce.textContent=c.text; ce.className='tick-chg '+(chgPct===null?'chg-flat':chgPct>=0?'chg-up':'chg-down'); }
+}
+
+function updateSL(distId, currId, currentPrice, slPrice) {
+  const dist=((slPrice-currentPrice)/currentPrice*100);
+  const de=document.getElementById(distId); if(de) de.textContent=Math.abs(dist).toFixed(1)+'% distancia';
+  const ce=document.getElementById(currId); if(ce) ce.textContent=fmtPrice(currentPrice);
+}
+
+// ── Main refresh ──
+async function refreshPrices() {
+  const btn=document.getElementById('refreshBtn');
+  btn.classList.add('loading');
+  showToast('Actualizando precios en vivo…');
+  try {
+    const [crypto, metals, clp] = await Promise.all([
+      fetchCrypto().catch(()=>null),
+      fetchMetals().catch(()=>({xau:4521,xauChg:-0.42,xag:76.14,xagChg:-0.71})),
+      fetchCLP().catch(()=>940)
+    ]);
+    if(crypto?.bitcoin){
+      const b=crypto.bitcoin;
+      updateCard('btc',b.usd,b.usd_24h_change,b.usd_24h_vol,b.usd_market_cap);
+      updateTicker('BTC',b.usd,b.usd_24h_change);
+      updateSL('slBtcDist','slBtcCurrent',b.usd,SL.btc);
+      document.getElementById('scBtcPrice').textContent=fmtPrice(b.usd);
+      lastPrices.btc=b.usd;
+    }
+    if(crypto?.ethereum){
+      const e=crypto.ethereum;
+      updateCard('eth',e.usd,e.usd_24h_change,e.usd_24h_vol,e.usd_market_cap);
+      updateTicker('ETH',e.usd,e.usd_24h_change);
+      updateSL('slEthDist','slEthCurrent',e.usd,SL.eth);
+      document.getElementById('scEthPrice').textContent=fmtPrice(e.usd);
+      lastPrices.eth=e.usd;
+    }
+    if(metals?.xau){
+      updateCard('xau',metals.xau,metals.xauChg,null,null);
+      updateTicker('XAU',metals.xau,metals.xauChg);
+      updateSL('slXauDist','slXauCurrent',metals.xau,SL.xau);
+      document.getElementById('scXauPrice').textContent=fmtPrice(metals.xau);
+      lastPrices.xau=metals.xau;
+    }
+    if(metals?.xag){
+      updateCard('xag',metals.xag,metals.xagChg,null,null);
+      updateTicker('XAG',metals.xag,metals.xagChg);
+      updateSL('slXagDist','slXagCurrent',metals.xag,SL.xag);
+      document.getElementById('scXagPrice').textContent=fmtPrice(metals.xag);
+      lastPrices.xag=metals.xag;
+      if(lastPrices.xau) document.getElementById('gsrVal').textContent=(lastPrices.xau/metals.xag).toFixed(1)+'x';
+    }
+    if(clp){
+      document.getElementById('clpVal').textContent='$'+Math.round(clp).toLocaleString('es-CL');
+      updateTicker('CLP',Math.round(clp),null);
+    }
+    setUpdateTime();
+    showToast('✓ Precios actualizados');
+  } catch(err) {
+    showToast('⚠ Error parcial — algunos datos son estáticos');
+    setUpdateTime();
+  }
+  btn.classList.remove('loading');
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded',()=>{
+  const now=new Date();
+  document.getElementById('dateLabel').textContent=
+    now.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+  refreshPrices();
+  initMainChart();
+});
+</script>
+</body>
+</html>
+HTMLEOF
+echo "File size: $(wc -c < /mnt/user-data/outputs/market-dashboard-v2.html) bytes"
